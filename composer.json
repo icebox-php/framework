@@ -1,0 +1,25 @@
+{
+    "name": "icebox/framework",
+    "type": "library",
+    "description": "The Icebox Framework.",
+    "keywords": ["framework", "icebox"],
+    "homepage": "http://torovin.com/icebox",
+    "require-dev": {
+        "phpunit/phpunit": "6.5"
+    },
+    "require": {
+    },
+    "autoload": {
+        "files": [
+            "src/helper.php"
+        ],
+        "psr-4": {
+          "Icebox\\": "src/icebox/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Icebox\\Tests\\": "tests/"
+        }
+    }
+}
