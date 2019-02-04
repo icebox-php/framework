@@ -4,8 +4,49 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "24206585143d9c2631d3a754260825bd",
-    "packages": [],
+    "content-hash": "6e96e46b000ee78135c4efdf03b782aa",
+    "packages": [
+        {
+            "name": "icebox/activerecord",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/iceboxphp/activerecord.git",
+                "reference": "f9e128b449ab12d748f085a6468d6efbc051ab20"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/iceboxphp/activerecord/zipball/f9e128b449ab12d748f085a6468d6efbc051ab20",
+                "reference": "f9e128b449ab12d748f085a6468d6efbc051ab20",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "require-dev": {
+                "pear/log": "~1.12",
+                "pear/pear_exception": "1.0-beta1",
+                "phpunit/phpunit": "4.*"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "ActiveRecord.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "activerecord is an open source ORM library based on the ActiveRecord pattern.",
+            "homepage": "http://torovin.com",
+            "keywords": [
+                "activerecord",
+                "orm"
+            ],
+            "time": "2019-01-30T06:40:07+00:00"
+        }
+    ],
     "packages-dev": [
         {
             "name": "doctrine/instantiator",
@@ -1529,7 +1570,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "icebox/activerecord": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": [],
