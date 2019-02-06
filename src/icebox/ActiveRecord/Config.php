@@ -4,12 +4,12 @@
  * @package Icebox
  */
 
-use ActiveRecord\Config as ArConfig;
+namespace Icebox\ActiveRecord;
 
 class Config
 {
     public static function initialize(Closure $initializer)
   	{
-  		  ArConfig($initializer);
+  		  \ActiveRecord\Config::initialize($initializer);
   	}
 }
