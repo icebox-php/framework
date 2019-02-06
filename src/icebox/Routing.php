@@ -43,10 +43,6 @@ class Routing
         $find = strpos($request_uri, $project_directory);
         if ($find === 0) { $uri = substr($request_uri, strlen($project_directory)); }
 
-
-        var_dump($uri);
-
-
         // remove /index.php if you request a page like this: http://localhost/ice-box/index.php/posts
         // if $uri = '/index.php/posts', you need to get '/posts'
         $find = strpos($uri, $index_file);
