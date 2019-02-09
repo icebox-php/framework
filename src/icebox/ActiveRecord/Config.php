@@ -5,6 +5,7 @@
  */
 
 namespace Icebox\ActiveRecord;
+use Closure;
 
 class Config
 {
