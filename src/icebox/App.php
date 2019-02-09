@@ -66,13 +66,23 @@ class App {
     }
 
     public static function root_url(string $path = '', Array $params = [], $url_prefix = null) {
+      // set params in path
+      $prepared_path = self::append_params_to_path($path, $params);
+
+      // set url_prefix
       if($url_prefix == null) { $url_prefix = self::$url_prefix; }
-      return $url_prefix . '://' . self::$root_url . $path;
+
+      return $url_prefix . '://' . self::$root_url . $prepared_path;
     }
 
     public static function url(string $path = '', Array $params = [], $url_prefix = null) {
+      // set params in path
+      $prepared_path = self::append_params_to_path($path, $params);
+
+      // set url_prefix
       if($url_prefix == null) { $url_prefix = self::$url_prefix; }
-      return $url_prefix . '://' . self::$url . $path;
+
+      return $url_prefix . '://' . self::$url . $prepared_path;
     }
 
     public function handle($matcher) {
@@ -177,5 +187,28 @@ class App {
         $action = $parts[1];
 
         return array(new $controller, $action);
+    }
+
+    private static function append_params_to_path(string $path = '', Array $params = []) {
+        if(strpos($path, ':') == false) { return $path; }
+
+        $path = trim($path, '/'); // remove trailing and leading slash
+        $route_parts = explode('/', $path);
+
+        $uri = '';
+        for($i=0; $i < count($route_parts); $i++) {
+            $uri_part = $route_parts[$i];
+            if(substr($uri_part, 0, 1) == ':' && isset($params[$uri_part])) {
+                // if(!isset($params[$uri_part])) {
+                  // throw new \Exception("Parameter is missing in url");
+                // }
+                $uri .= urlencode($params[$uri_part]);
+            } else {
+                $uri .= $uri_part;
+            }
+            $uri .= '/';
+        }
+
+        return '/' . trim($uri, '/');
     }
 }

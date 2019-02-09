@@ -13,6 +13,7 @@ class Routing
 
     public function add(string $method, string $path, string $controller_action)
     {
+        if(array_key_exists($path, $this->routes)) { return false; }
         $this->routes[$path] = array('method' => $method, 'path' => ltrim($path, '/'), 'controller_action' => $controller_action);
     }
 
@@ -24,6 +25,17 @@ class Routing
     public function post($path, $controller_action)
     {
         $this->add('post', $path, $controller_action);
+    }
+
+    public function resource($path, $controller) {
+      $this->add('get', $path, $controller . '::index');
+      $this->add('get', $path . '/new', $controller . '::new');
+      $this->add('post', $path , $controller . '::create');
+      $this->add('get', $path . '/:id', $controller . '::show');
+      $this->add('get', $path . '/:id/edit', $controller . '::edit');
+      $this->add('put', $path . '/:id', $controller . '::update');
+      $this->add('patch', $path . '/:id', $controller . '::update');
+      $this->add('delete', $path . '/:id', $controller . '::delete');
     }
 
     public function url_matcher()
