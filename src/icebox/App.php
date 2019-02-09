@@ -43,7 +43,7 @@ class App {
       self::set_file($dir);
       self::set_project_directory($project_directory);
       self::set_url_prefix();
-      $root_url = self::set_root_url($dir);
+      $root_url = self::set_root_url($project_directory);
       self::set_url($root_url, $index_file);
       self::init_active_record();
     }
@@ -156,13 +156,15 @@ class App {
       self::$url_prefix = 'http' . ( self::is_https_connection() ? 's' : '' );
     }
 
-    private static function set_root_url($dir) {
+    private static function set_root_url($project_directory) {
       $url = $_SERVER['HTTP_HOST'];
       if( $_SERVER['SERVER_PORT'] != 80) { $url .= ':' . $_SERVER['SERVER_PORT']; }
 
-      $app_directory = str_replace($_SERVER['DOCUMENT_ROOT'], '', $dir);
+      // $app_directory = str_replace($_SERVER['DOCUMENT_ROOT'], '', $dir);
+      // self::$root_url = $url . $app_directory;
 
-      self::$root_url = $url . $app_directory;
+      self::$root_url = $url . $project_directory;
+
       return self::$root_url;
     }
 
