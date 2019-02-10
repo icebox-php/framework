@@ -101,6 +101,14 @@ class Controller {
     }
   }
 
+  public function filter_post_params(Array $attributes) {
+    $params = array();
+    foreach($attributes as $attr) {
+      $params[$attr] = isset($_POST[$attr]) ? $_POST[$attr] : null;
+    }
+    return $params;
+  }
+
   private function getRedirectContent($url) {
       return sprintf('<!DOCTYPE html>
   <html>

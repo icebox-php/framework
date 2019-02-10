@@ -13,8 +13,7 @@ class Routing
 
     public function add(string $method, string $path, string $controller_action)
     {
-        if(array_key_exists($path, $this->routes)) { return false; }
-        $this->routes[$path] = array('method' => $method, 'path' => ltrim($path, '/'), 'controller_action' => $controller_action);
+        $this->routes[] = array('method' => $method, 'path' => ltrim($path, '/'), 'controller_action' => $controller_action);
     }
 
     public function get($path, $controller_action)
