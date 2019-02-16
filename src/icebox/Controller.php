@@ -16,7 +16,9 @@ class Controller {
   public $_controller = '';
   public $_action = '';
 
-  public function render($view = null, Array $var = array(), Array $options = array()) {
+  public function render($_view = null, Array $_var = array(), Array $_options = array()) {
+
+    extract($_var);
 
     // find controller and action
     if($this->from_controller == true) {
@@ -25,17 +27,17 @@ class Controller {
     }
 
 
-    if($view == null) {
-       $view = $this->_action;
+    if($_view == null) {
+       $_view = $this->_action;
     }
 
 
     // if first character is slash: load from Framework::view_root()/$view
     // if first character is not slash: load from Framework::view_root()/controller/$view
-    if($view[0] == '/') {
-      $view_file = App::view_root() . $view . '.html.php';
+    if($_view[0] == '/') {
+      $_view_file = App::view_root() . $_view . '.html.php';
     } else {
-      $view_file = App::view_root() . DIRECTORY_SEPARATOR . $this->_controller . DIRECTORY_SEPARATOR . $view . '.html.php';
+      $_view_file = App::view_root() . DIRECTORY_SEPARATOR . $this->_controller . DIRECTORY_SEPARATOR . $_view . '.html.php';
     }
 
 
@@ -43,12 +45,12 @@ class Controller {
 
       $this->from_controller = false;
 
-      if(array_key_exists('layout', $options)) { $this->layout = $options['layout']; }
-      if(array_key_exists('status', $options)) { $this->status = $options['status']; }
-      if(array_key_exists('headers', $options)) { $this->headers = $options['headers']; }
+      if(array_key_exists('layout', $_options)) { $this->layout = $_options['layout']; }
+      if(array_key_exists('status', $_options)) { $this->status = $_options['status']; }
+      if(array_key_exists('headers', $_options)) { $this->headers = $_options['headers']; }
 
       ob_start();
-      include($view_file);
+      include($_view_file);
       $this->_content['content'] = ob_get_clean();
 
       if($this->layout == false) {
@@ -61,7 +63,7 @@ class Controller {
 
     } else {
 
-      include($view_file);
+      include($_view_file);
 
     }
 
