@@ -33,7 +33,15 @@ class Request {
       return self::$request_method;
     }
 
-    $request_method = strtolower($_SERVER['REQUEST_METHOD']);
+    #============== start default value ==========
+    // default value
+    $request_method = 'get';
+
+    // update default value, if REQUEST_METHOD exists
+    if( isset($_SERVER['REQUEST_METHOD']) ) {
+      $request_method = strtolower($_SERVER['REQUEST_METHOD']);
+    }
+    #============== end default value ============
 
     if($request_method != 'get' && $request_method != 'post') {
       return $request_method;
