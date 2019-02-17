@@ -1,8 +1,50 @@
 <?php
 
-echo "this is icebox CLI\n";
+// foreach($argv as $value)
+// {
+  // echo "$value\n";
+// }
 
-foreach($argv as $value)
-{
-  echo "$value\n";
+function cli_show_main_help() {
+  echo "Usage:\n";
+  echo "  php icebox [options]\n\n";
+
+  echo "Options:";
+  echo "  -h, [--help]       # Show this help message and quit";
+  echo "\n";
+}
+
+function cli_show_specific_help_generate() {
+  echo "Usage:\n";
+  echo "  php icebox generate <type> <name> [options]\n\n";
+
+  echo "Type:\n";
+  echo "  crud               # Show this help message and quit";
+  echo "\n";
+}
+
+function cli_show_specific_help($args) {
+  if($args[2] == 'g' || $args[2] == 'generate') {
+    cli_show_specific_help_generate($args);
+  }
+}
+
+if(count($argv) == 1) { // no arguments
+  cli_show_main_help();
+
+} else if($argv[1] == '-h' || $argv[1] == '--help') { // help arguments
+
+  if(isset($argv[2])) {
+    cli_show_specific_help($argv);
+  } else {
+    cli_show_main_help();
+  }
+
+} else { // other arguments
+
+  if($argv[1] == 'g' || $argv[1] == 'generate') {
+    if($argv[2] == 'crud') {
+      echo "Crud generator\n";
+    }
+  }
 }
