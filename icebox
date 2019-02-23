@@ -29,6 +29,22 @@ function cli_show_specific_help($args) {
   }
 }
 
+function cli_run_generate_crud($singular, $plural) {
+  echo "$singular\n";
+  echo "$plural\n";
+
+  $model_name = ucfirst($singular);
+  $controller_name = ucfirst($plural);
+
+  // generate controller
+
+  ob_start();
+  include(__DIR__ . '/src/generator/controller.php');
+  $controller_text = ob_get_clean();
+
+  echo $controller_text;
+}
+
 if(count($argv) == 1) { // no arguments
   cli_show_main_help();
 
@@ -43,8 +59,17 @@ if(count($argv) == 1) { // no arguments
 } else { // other arguments
 
   if($argv[1] == 'g' || $argv[1] == 'generate') {
-    if($argv[2] == 'crud') {
-      echo "Crud generator\n";
+
+    if(isset($argv[2])) {
+      if($argv[2] == 'crud') {
+        echo "Crud generator\n";
+        $singular = $argv[3];
+        $plural = $argv[4];
+        cli_run_generate_crud($singular, $plural);
+      }
+    } else {
+      echo "Option missing\n";
+      echo "Try: php icebox -h <command-name>\n";
     }
   }
 }
