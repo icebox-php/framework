@@ -3,7 +3,6 @@
 use Icebox\App;
 <?php php_end_tag(); ?>
 
-<br><br>
 
 <form class="margin-bottom-20" action="<?php php_start_tag(); ?> echo $action; <?php php_end_tag(); ?>" method="post">
 

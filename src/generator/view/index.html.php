@@ -4,15 +4,6 @@ use Icebox\App;
 <?php php_end_tag(); ?>
 
 
-This is <?php echo $plural; ?>#index page <br><br>
-
-File location: <?php php_start_tag(); ?> echo __FILE__ <?php php_end_tag(); ?>
-
-
-<br><br>
-
-<hr>
-
 <h5><?php echo ucfirst($plural); ?></h5>
 
 <hr>

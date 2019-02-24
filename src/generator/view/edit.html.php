@@ -4,10 +4,8 @@ use Icebox\App;
 <?php php_end_tag(); ?>
 
 
-This is <?php echo $plural ?>#edit page <br><br>
-
-File location: <?php php_start_tag(); ?> echo __FILE__ <?php php_end_tag(); ?>
-
+<h5>Edit <?php echo $singular; ?></h5>
+<hr>
 
 <?php php_start_tag(); ?>
 
