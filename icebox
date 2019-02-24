@@ -76,8 +76,27 @@ function cli_create_view__form($singular, $plural) {
   cli_create_file($file_name, $view_text);
 }
 
-function cli_create_view_edit() {}
-function cli_create_view_index() {}
+function cli_create_view_edit($singular, $plural) {
+  $view_folder = ucfirst($plural);
+
+  ob_start();
+  include(__DIR__ . '/src/generator/view/edit.html.php');
+  $view_text = ob_get_clean();
+
+  echo "create  app/View/$view_folder/edit.html.php\n";
+  $file_name = PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder/edit.html.php";
+
+  if (!is_dir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder")) {
+    // dir doesn't exist, make it
+    mkdir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder");
+  }
+  cli_create_file($file_name, $view_text);
+}
+
+function cli_create_view_index() {
+
+}
+
 function cli_create_view_new() {}
 function cli_create_view_show() {}
 
@@ -92,7 +111,7 @@ function cli_run_generate_crud($singular) {
 
   // create view
   cli_create_view__form($singular, $plural);
-  cli_create_view_edit($model_name);
+  cli_create_view_edit($singular, $plural);
   cli_create_view_index($model_name);
   cli_create_view_new($model_name);
   cli_create_view_show($model_name);
