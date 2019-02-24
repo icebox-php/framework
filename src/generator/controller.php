@@ -1,3 +1,6 @@
+<?php echo '<?php'; ?>
+
+
 namespace App\Controller;
 
 use Icebox\Request;
@@ -5,12 +8,12 @@ use App\Controller\AppController;
 use App\Model\<?php echo $model_name; ?>;
 use Icebox\App;
 
-class <?php echo $controller_name; ?>Controller extends AppController
+class <?php echo $controller_name; ?> extends AppController
 {
     public function index()
     {
-      $<?php echo $plural; ?> = <?php echo $model_name; ?>::find('all');
-     return $this->render(null, array( '<?php echo $plural; ?>' => $<?php echo $plural; ?> ));
+        $<?php echo $plural; ?> = <?php echo $model_name; ?>::find('all');
+        return $this->render(null, array( '<?php echo $plural; ?>' => $<?php echo $plural; ?> ));
     }
 
     public function new()

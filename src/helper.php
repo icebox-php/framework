@@ -5,3 +5,11 @@ if (! function_exists('h')) {
     return htmlspecialchars($text);
   }
 }
+
+function php_start_tag() {
+  echo '<?php';
+}
+
+function php_end_tag() {
+  echo '?>';
+}
