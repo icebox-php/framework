@@ -6,7 +6,7 @@ use Icebox\App;
 
 This is <?php echo $plural ?>#edit page <br><br>
 
-File location: <?php echo __FILE__ ?>
+File location: <?php php_start_tag(); ?> echo __FILE__ <?php php_end_tag(); ?>
 
 
 <?php php_start_tag(); ?>

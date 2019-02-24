@@ -31,11 +31,11 @@ function cli_show_specific_help($args) {
   }
 }
 
-function cli_create_file($file_name, $text) {
-  if(file_put_contents($file_name, $text)) {
-    echo "        created\n";
+function cli_create_file($file_name, $file_full_path, $text) {
+  if(file_put_contents($file_full_path, $text)) {
+    echo "create  $file_name\n";
   } else {
-    echo "        error: can not create file\n";
+    echo "error   can not create file: $file_name\n";
   }
 }
 
@@ -44,9 +44,9 @@ function cli_create_controller($controller_name, $model_name, $singular, $plural
   include(__DIR__ . '/src/generator/controller.php');
   $controller_text = ob_get_clean();
 
-  echo "create  app/Controller/$controller_name.php\n";
-  $file_name = PROJECT_SOURCE_DIRECTORY . "/app/Controller/$controller_name.php";
-  cli_create_file($file_name, $controller_text);
+  $file_name = "app/Controller/$controller_name.php";
+  $file_full_path = PROJECT_SOURCE_DIRECTORY . "/app/Controller/$controller_name.php";
+  cli_create_file($file_name, $file_full_path, $controller_text);
 }
 
 function cli_create_model($model_name) {
@@ -54,9 +54,9 @@ function cli_create_model($model_name) {
   include(__DIR__ . '/src/generator/model.php');
   $model_text = ob_get_clean();
 
-  echo "create  app/Model/$model_name.php\n";
-  $file_name = PROJECT_SOURCE_DIRECTORY . "/app/Model/$model_name.php";
-  cli_create_file($file_name, $model_text);
+  $file_name = "app/Model/$model_name.php";
+  $file_full_path = PROJECT_SOURCE_DIRECTORY . "/app/Model/$model_name.php";
+  cli_create_file($file_name, $file_full_path, $model_text);
 }
 
 function cli_create_view__form($singular, $plural) {
@@ -66,14 +66,14 @@ function cli_create_view__form($singular, $plural) {
   include(__DIR__ . '/src/generator/view/_form.html.php');
   $view_text = ob_get_clean();
 
-  echo "create  app/View/$view_folder/_form.html.php\n";
-  $file_name = PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder/_form.html.php";
+  $file_name = "app/View/$view_folder/_form.html.php";
+  $file_full_path = PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder/_form.html.php";
 
   if (!is_dir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder")) {
     // dir doesn't exist, make it
     mkdir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder");
   }
-  cli_create_file($file_name, $view_text);
+  cli_create_file($file_name, $file_full_path, $view_text);
 }
 
 function cli_create_view_edit($singular, $plural) {
@@ -83,18 +83,31 @@ function cli_create_view_edit($singular, $plural) {
   include(__DIR__ . '/src/generator/view/edit.html.php');
   $view_text = ob_get_clean();
 
-  echo "create  app/View/$view_folder/edit.html.php\n";
-  $file_name = PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder/edit.html.php";
+  $file_name = "app/View/$view_folder/edit.html.php";
+  $file_full_path = PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder/edit.html.php";
 
   if (!is_dir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder")) {
     // dir doesn't exist, make it
     mkdir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder");
   }
-  cli_create_file($file_name, $view_text);
+  cli_create_file($file_name, $file_full_path, $view_text);
 }
 
-function cli_create_view_index() {
+function cli_create_view_index($singular, $plural) {
+  $view_folder = ucfirst($plural);
 
+  ob_start();
+  include(__DIR__ . '/src/generator/view/index.html.php');
+  $view_text = ob_get_clean();
+
+  $file_name = "app/View/$view_folder/index.html.php";
+  $file_full_path = PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder/index.html.php";
+
+  if (!is_dir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder")) {
+    // dir doesn't exist, make it
+    mkdir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder");
+  }
+  cli_create_file($file_name, $file_full_path, $view_text);
 }
 
 function cli_create_view_new() {}
@@ -112,9 +125,9 @@ function cli_run_generate_crud($singular) {
   // create view
   cli_create_view__form($singular, $plural);
   cli_create_view_edit($singular, $plural);
-  cli_create_view_index($model_name);
-  cli_create_view_new($model_name);
-  cli_create_view_show($model_name);
+  cli_create_view_index($singular, $plural);
+  // cli_create_view_new($model_name);
+  // cli_create_view_show($model_name);
 }
 
 if(count($argv) == 1) { // no arguments
