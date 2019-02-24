@@ -127,7 +127,47 @@ function cli_create_view_new($singular, $plural) {
   cli_create_file($file_name, $file_full_path, $view_text);
 }
 
-function cli_create_view_show() {}
+function cli_create_view_show($singular, $plural) {
+  $view_folder = ucfirst($plural);
+
+  ob_start();
+  include(__DIR__ . '/src/generator/view/show.html.php');
+  $view_text = ob_get_clean();
+
+  $file_name = "app/View/$view_folder/show.html.php";
+  $file_full_path = PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder/show.html.php";
+
+  if (!is_dir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder")) {
+    // dir doesn't exist, make it
+    mkdir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder");
+  }
+  cli_create_file($file_name, $file_full_path, $view_text);
+}
+
+function cli_insert_resource_route($plural) {
+  $controller = ucfirst($plural);
+
+  $route_file = PROJECT_SOURCE_DIRECTORY . '/config/routes.php';
+  // $f = file_get_contents($route_file);
+
+  $route_text = '';
+
+  $fp = fopen($route_file, "r+");
+  $start_pos = ftell($fp);
+  for($i=0; $i<5; $i++) { $route_text .= fgets($fp); }
+  // fputs($fp, "my strings\n");
+
+  $route_text .= "\n" . '$route->resource(\'' . $plural . '\', \'' . $controller . '\');' . "\n";
+  $route_text .= stream_get_contents($fp);
+  fseek($fp, $start_pos);
+
+  // echo ftell($fp);
+
+  // echo $route_text;
+
+  fwrite($fp, $route_text);
+  fclose($fp);
+}
 
 function cli_run_generate_crud($singular) {
   $plural = Utils::pluralize($singular);
@@ -143,7 +183,8 @@ function cli_run_generate_crud($singular) {
   cli_create_view_edit($singular, $plural);
   cli_create_view_index($singular, $plural);
   cli_create_view_new($singular, $plural);
-  // cli_create_view_show($model_name);
+  cli_create_view_show($singular, $plural);
+  cli_insert_resource_route($plural);
 }
 
 if(count($argv) == 1) { // no arguments

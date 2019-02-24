@@ -18,7 +18,7 @@ class <?php echo $controller_name; ?> extends AppController
 
     public function new()
     {
-        return $this->render(null, [ 'post' => new <?php echo $model_name; ?>() ]);
+        return $this->render(null, [ '<?php echo $singular; ?>' => new <?php echo $model_name; ?>() ]);
     }
 
     public function create()
@@ -28,7 +28,7 @@ class <?php echo $controller_name; ?> extends AppController
 
         if($saved) {
             $this->flash('success', 'Saved successfully');
-            return $this->redirect(App::url('<?php echo $plural; ?>/:id', [':id' => $post->id]));
+            return $this->redirect(App::url('<?php echo $plural; ?>/:id', [':id' => $<?php echo $singular; ?>->id]));
         } else {
             return $this->render('new', array( '<?php echo $singular; ?>' => $<?php echo $singular; ?> ));
         }
@@ -69,6 +69,6 @@ class <?php echo $controller_name; ?> extends AppController
     }
 
     private function <?php echo $singular; ?>_params() {
-      return $this->filter_<?php echo $singular; ?>_params(array('title', 'content'));
+      return $this->filter_post_params(array('title', 'content'));
     }
 }
