@@ -22,17 +22,19 @@ use Icebox\App;
     </div>
   <?php php_start_tag(); ?> } <?php php_end_tag(); ?>
 
-  <div class="form-group">
-      <label for="<?php echo $singular ?>_title_input">Title</label>
-      <input type="text" class="form-control" id="<?php echo $singular ?>_title_input" name="title"
-          aria-describedby="title_help" placeholder="Title" value="<?php php_start_tag(); ?> echo h($<?php echo $singular ?>->title); <?php php_end_tag(); ?>">
-      <!-- <small id="title_help" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
-    </div>
-    <div class="form-group">
-      <label for="<?php echo $singular ?>_content_input">Content</label>
-      <textarea class="form-control" id="<?php echo $singular ?>_content_input" name="content"
-          placeholder="Content"><?php php_start_tag(); ?> echo h($<?php echo $singular ?>->content); <?php php_end_tag(); ?></textarea>
-    </div>
+
+<?php
+
+    $arr = generator_split_attr_get_column_names($attrs);
+    foreach ($arr as $item) {
+      // echo $item . "\n";
+      echo $form_helper::input($singular, $item);
+    }
+  // echo $form_helper::input($singular, 'title');
+  // echo $form_helper::input($singular, 'content');
+  // echo $form_helper::input($singular, 'tag');
+
+?>
 
     <button type="submit" class="btn btn-primary"><?php php_start_tag(); ?> echo $button_text; <?php php_end_tag(); ?></button>
 
