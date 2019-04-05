@@ -69,6 +69,6 @@ class <?php echo $controller_name; ?> extends AppController
     }
 
     private function <?php echo $singular; ?>_params() {
-      return $this->filter_post_params(array('title', 'content'));
+      return $this->filter_post_params(<?php echo generator_split_attr_for_controller_params($attrs); ?>);
     }
 }

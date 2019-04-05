@@ -39,7 +39,29 @@ function cli_create_file($file_name, $file_full_path, $text) {
   }
 }
 
-function cli_create_controller($controller_name, $model_name, $singular, $plural) {
+/* cli generator helper */
+  function generator_split_attr_get_column_names($attrs) {
+    $arr = [];
+    foreach($attrs as $key => $value) {
+      $temp = explode(':', $value);
+      $arr[] = $temp[0];
+    }
+    return $arr;
+  }
+  function generator_split_attr_for_controller_params($attrs) {
+    $arr = generator_split_attr_get_column_names($attrs);
+
+    $str = "array('";
+    $str .= implode("', '", $arr);
+    $str .= "')";
+
+    if($str == "array('')") { $str = "array()"; }
+
+    return $str;
+  }
+/* ./cli generator helper */
+
+function cli_create_controller($controller_name, $model_name, $singular, $plural, $attrs) {
   ob_start();
   include(__DIR__ . '/src/generator/controller.php');
   $controller_text = ob_get_clean();
@@ -169,13 +191,17 @@ function cli_insert_resource_route($plural) {
   fclose($fp);
 }
 
-function cli_run_generate_crud($singular) {
+function cli_run_generate_crud($singular, $args) {
   $plural = Utils::pluralize($singular);
 
   $model_name = ucfirst($singular);
   $controller_name = ucfirst($plural) . 'Controller';
 
-  cli_create_controller($controller_name, $model_name, $singular, $plural);
+  // find attrs list from commad
+  $args_chunk = array_chunk($args, 4);
+  $attrs = isset($args_chunk[1]) ? $args_chunk[1] : [];
+
+  cli_create_controller($controller_name, $model_name, $singular, $plural, $attrs);
   cli_create_model($model_name);
 
   // create view
@@ -206,7 +232,7 @@ if(count($argv) == 1) { // no arguments
       if($argv[2] == 'crud') {
         echo "Crud generator started\n";
         $singular = $argv[3];
-        cli_run_generate_crud($singular);
+        cli_run_generate_crud($singular, $argv);
       }
     } else {
       echo "Option missing\n";
