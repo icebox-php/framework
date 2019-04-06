@@ -25,10 +25,22 @@ use Icebox\App;
 
 <?php
 
+  // generator_get_html_input_type($column_type);
+
     $arr = generator_split_attr_get_column_names($attrs);
-    foreach ($arr as $item) {
-      // echo $item . "\n";
-      echo $form_helper::input($singular, $item);
+    foreach ($arr as $column => $ar_type) { // $ar_type meand ActiveRecord Type
+      // echo $column . '-' . $type . "\n";
+
+      $col = generator_get_html_input_type($ar_type);
+
+
+      if($col['html_tag'] == 'input') {
+        echo $form_helper->input($singular, $column, $col['type']);
+      } else if($col['html_tag'] == 'checkbox') {
+        echo $form_helper->checkbox($singular, $column);
+      } else if($col['html_tag'] == 'textarea') {
+        echo $form_helper->textarea($singular, $column);
+      }
     }
   // echo $form_helper::input($singular, 'title');
   // echo $form_helper::input($singular, 'content');

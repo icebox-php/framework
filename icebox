@@ -44,7 +44,7 @@ function cli_create_file($file_name, $file_full_path, $text) {
     $arr = [];
     foreach($attrs as $key => $value) {
       $temp = explode(':', $value);
-      $arr[] = $temp[0];
+      $arr[$temp[0]] = isset($temp[1]) ? $temp[1] : 'string';
     }
     return $arr;
   }
@@ -52,12 +52,31 @@ function cli_create_file($file_name, $file_full_path, $text) {
     $arr = generator_split_attr_get_column_names($attrs);
 
     $str = "array('";
-    $str .= implode("', '", $arr);
+    $str .= implode("', '", array_keys($arr));
     $str .= "')";
 
     if($str == "array('')") { $str = "array()"; }
 
     return $str;
+  }
+
+  function generator_get_html_input_type($column_type) {
+    $supported_types = [
+      // :binary
+      'boolean' => array( 'html_tag' => 'checkbox', 'type' => ''),
+      'date' => array( 'html_tag' => 'input', 'type' => 'date'),
+      'datetime' => array( 'html_tag' => 'input', 'type' => 'datetime-local'),
+      'decimal' => array( 'html_tag' => 'input', 'type' => 'number'),
+      'float' => array( 'html_tag' => 'input', 'type' => 'number'),
+      'integer' => array( 'html_tag' => 'input', 'type' => 'number'),
+      // 'primary_key' => array( 'html_tag' => 'input', 'type' => 'hidden'),
+      'string' => array( 'html_tag' => 'input', 'type' => 'text'),
+      'text' => array( 'html_tag' => 'textarea', 'type' => ''),
+      'time' => array( 'html_tag' => 'input', 'type' => 'time'),
+      // 'timestamp' => array( 'html_tag' => 'input', 'type' => 'datetime-local'),
+    ];
+
+    return (isset($supported_types[$column_type]) ? $supported_types[$column_type] : $supported_types['string']);
   }
 /* ./cli generator helper */
 
@@ -201,8 +220,7 @@ function cli_run_generate_crud($singular, $args) {
   $controller_name = ucfirst($plural) . 'Controller';
 
   // find attrs list from commad
-  $args_chunk = array_chunk($args, 4);
-  $attrs = isset($args_chunk[1]) ? $args_chunk[1] : [];
+  $attrs = array_slice($args, 4);
 
   cli_create_controller($controller_name, $model_name, $singular, $plural, $attrs);
   cli_create_model($model_name);
