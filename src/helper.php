@@ -91,7 +91,7 @@ function checkbox_tag($checked, $attributes) {
 
 */
 
-function select_tag($options, $attributes) {
+function select_tag($options, $value, $attributes) {
   echo '<select';
   foreach($attributes as $attr => $val) {
       echo ' ' . $attr . '="'. $val .'"';
@@ -99,7 +99,8 @@ function select_tag($options, $attributes) {
   echo ">\n";
 
   foreach ($options as $val => $txt) {
-    echo '  <option value="' . $val . '">'. $txt ."</option>\n";
+    $selected = ($val == $value) ? ' selected' : '';
+    echo '  <option value="' . h($val) . '"'.$selected.'>'. h($txt) ."</option>\n";
   }
 
   echo '</select>';

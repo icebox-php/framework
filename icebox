@@ -67,12 +67,15 @@ function cli_create_file($file_name, $file_full_path, $text) {
       'date' => array( 'html_tag' => 'input', 'type' => 'date'),
       'datetime' => array( 'html_tag' => 'input', 'type' => 'datetime-local'),
       'decimal' => array( 'html_tag' => 'input', 'type' => 'number'),
+
       'float' => array( 'html_tag' => 'input', 'type' => 'number'),
       'integer' => array( 'html_tag' => 'input', 'type' => 'number'),
       // 'primary_key' => array( 'html_tag' => 'input', 'type' => 'hidden'),
       'string' => array( 'html_tag' => 'input', 'type' => 'text'),
       'text' => array( 'html_tag' => 'textarea', 'type' => ''),
+
       'time' => array( 'html_tag' => 'input', 'type' => 'time'),
+      'select' => array( 'html_tag' => 'select', 'type' => ''),
       // 'timestamp' => array( 'html_tag' => 'input', 'type' => 'datetime-local'),
     ];
 

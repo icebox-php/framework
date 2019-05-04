@@ -40,6 +40,8 @@ use Icebox\App;
         echo $form_helper->checkbox($singular, $column);
       } else if($col['html_tag'] == 'textarea') {
         echo $form_helper->textarea($singular, $column);
+      } else if($col['html_tag'] == 'select') {
+        echo $form_helper->select($singular, $column);
       }
     }
   // echo $form_helper::input($singular, 'title');
