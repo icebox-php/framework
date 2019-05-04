@@ -52,6 +52,29 @@ function textarea_tag($value, $attributes) {
   echo '</textarea>';
 }
 
+
+
+/*
+
+<?php checkbox_tag(1, array('name'=>'details', 'class'=>'form-control')); ?>
+
+-------- output -------
+
+<input type="checkbox" name="details" value="1" class="form-control" checked>
+
+*/
+
+function checkbox_tag($checked, $attributes) {
+  echo '<input';
+  foreach($attributes as $attr => $val) {
+      echo ' ' . $attr . '="'. $val .'"';
+  }
+
+  if($checked == 1 || $checked == true) { echo ' checked'; }
+
+  echo '>';
+}
+
 /*
 
 <?php $options = array(''=>'Please select', '1'=>'Lisbon', '2'=>'Madrid', '3'=>'Berlin'); ?>
