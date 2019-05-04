@@ -47,6 +47,39 @@ class FormHelper
   }
 
   public function textarea($singular, $attr) {
-    echo 'textarea - ' . $attr . "\n\n";
+    $html_attrs = array(
+      // '\'type\''        => '\'' . $type . '\'',
+      '\'class\''       => '\'form-control\'',
+      '\'id\''          => '\'' . $singular . '_' . $attr . '\'',
+      '\'name\''        => '\'' . $attr . '\'',
+      '\'placeholder\'' => '\'' . ucfirst($attr) . '\'',
+      // '\'value\''       => 'h($' . $singular . '->' . $attr . ')',
+    );
+    $value = 'h($' . $singular . '->' . $attr . ')';
+
+    $input_html = '';
+    foreach($html_attrs as $html_attr => $attr_val) {
+      $input_html .= $html_attr . ' => ' . $attr_val . ',';
+    }
+
+    $html = '  <div class="form-group">' . "\n";
+    $html .= '    <label for="' . $singular . '_' . $attr . '">' . ucfirst($attr) . '</label>' . "\n";
+    /*
+    $html .= '    <input type="text" class="form-control" id="' . $singular . '_' . $attr . '" name="' . $attr . '"' . "\n";
+    $html .= '        placeholder="' . ucfirst($attr) . '" value="<?php echo h($' . $singular . '->' . $attr . '); ?>">' . "\n";
+    */
+
+
+    $html .= "    <?php textarea_tag(";
+    $html .= $value;
+    $html .= ", array(";
+    // $html .= "'type' => 'text', 'name'=>'email', 'value'=>'me@torovin.com', 'class'=>'form-control'";
+    $html .= $input_html;
+    $html .= ")); ?>" . "\n";
+
+
+    $html .= '  </div>' . "\n\n";
+
+    return $html;
   }
 }

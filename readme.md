@@ -29,3 +29,16 @@ CREATE TABLE `posts` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+
+## Supported Column Types
+'boolean' => array( 'html_tag' => 'checkbox', 'type' => ''),
+'date' => array( 'html_tag' => 'input', 'type' => 'date'),
+'datetime' => array( 'html_tag' => 'input', 'type' => 'datetime-local'),
+'decimal' => array( 'html_tag' => 'input', 'type' => 'number'),
+<br>
+'float' => array( 'html_tag' => 'input', 'type' => 'number'),
+'integer' => array( 'html_tag' => 'input', 'type' => 'number'),
+'string' => array( 'html_tag' => 'input', 'type' => 'text'),
+'text' => array( 'html_tag' => 'textarea', 'type' => ''),
+<br>
+'time' => array( 'html_tag' => 'input', 'type' => 'time'),
