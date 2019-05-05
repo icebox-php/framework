@@ -3,6 +3,11 @@
 namespace Icebox;
 
 use Icebox\Exception\ResourceNotFoundException;
+use Icebox\Debug;
+
+use ErrorException;
+use Exception;
+use Error;
 
 class App {
     public static $controller_namespace  = 'App\Controller\\';
@@ -36,6 +41,8 @@ class App {
     */
     public function __construct($file, $project_directory = '')
     {
+      self::catch_warning_error();
+
       $dir = dirname($file);
       $index_file = basename($file);
 
@@ -46,6 +53,17 @@ class App {
       $root_url = self::set_root_url($project_directory);
       self::set_url($root_url, $index_file);
       self::init_active_record();
+    }
+
+    public static function catch_warning_error() {
+      if(defined('CATCH_WARNING') && CATCH_WARNING == true) {
+        set_error_handler(function($errno, $errstr, $errfile, $errline) {
+          if (!(error_reporting() & $errno)) {
+            return;
+          }
+          throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+        });
+      }
     }
 
     public static function file($path) {
@@ -122,12 +140,33 @@ class App {
 
             return new Response('Not Found', 404);
 
-        } catch (\Exception $exception) {
+        } catch(ErrorException $e) {
+            // $msg = "==Sorry, there was an error: ".$e->getMessage();
+
+            $msg = '';
+
+            if(defined('ICEBOX_DEBUG') && ICEBOX_DEBUG == true) {
+              $msg .= "ErrorException: ".$e->getMessage();
+              $msg .= "\n<br>\n";
+              $msg .= Debug::details($e);
+            } else {
+              $msg = 'An error occurred';
+            }
+
+            // Debug::details($e);
+
+            return new Response($msg, 500);
+        } catch (Exception $exception) {
 
             // var_dump( $exception );
             return new Response($exception, 500);
             return new Response('An error occurred', 500);
 
+        } catch(Error $e) {
+            $msg =  "-- Sorry, there was an error: ".$e->getMessage();
+            return new Response($msg, 500);
+        } finally {
+            restore_error_handler();
         }
 
     }
