@@ -27,7 +27,7 @@ class Request {
     self::$params = [];
   }
 
-  public function method() {
+  public static function method() {
 
     if(isset(self::$request_method)) {
       return self::$request_method;
