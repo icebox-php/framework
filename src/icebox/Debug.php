@@ -48,7 +48,7 @@ class Debug {
     $start_line = max(0, $line-8);
     $end_line = min(count($lines_array)-1, $line + 8);
 
-    $html = $html . $start_line . '--' . $end_line . '<br>';
+    //$html = $html . $start_line . '--' . $end_line . '<br>';
 
     // read file
     for($index = $start_line; $index <= $end_line; $index++ ) {
