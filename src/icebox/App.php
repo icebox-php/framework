@@ -136,7 +136,7 @@ class App {
                 );
             }
 
-        } catch (ResourceNotFoundException $exception) {
+        } catch (ResourceNotFoundException $e) {
 
             return new Response('Not Found', 404);
 
@@ -154,7 +154,7 @@ class App {
             // Debug::details($e);
 
             return new Response($msg, 500);
-        } catch (Exception $exception) {
+        } catch (Exception $e) {
 
           $msg = '';
 
