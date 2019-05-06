@@ -141,8 +141,6 @@ class App {
             return new Response('Not Found', 404);
 
         } catch(ErrorException $e) {
-            // $msg = "==Sorry, there was an error: ".$e->getMessage();
-
             $msg = '';
 
             if(defined('ICEBOX_DEBUG') && ICEBOX_DEBUG == true) {
@@ -158,13 +156,29 @@ class App {
             return new Response($msg, 500);
         } catch (Exception $exception) {
 
-            // var_dump( $exception );
-            return new Response($exception, 500);
-            return new Response('An error occurred', 500);
+          $msg = '';
+
+          if(defined('ICEBOX_DEBUG') && ICEBOX_DEBUG == true) {
+            $msg .= "Exception: ".$e->getMessage();
+            $msg .= "\n<br>\n";
+            $msg .= Debug::details($e);
+          } else {
+            $msg = 'An error occurred';
+          }
+
+          return new Response($msg, 500);
 
         } catch(Error $e) {
-            $msg =  "-- Sorry, there was an error: ".$e->getMessage();
-            return new Response($msg, 500);
+          $msg = '';
+
+          if(defined('ICEBOX_DEBUG') && ICEBOX_DEBUG == true) {
+            $msg .= "Error: ".$e->getMessage();
+            $msg .= "\n<br>\n";
+            $msg .= Debug::details($e);
+          } else {
+            $msg = 'An error occurred';
+          }
+          return new Response($msg, 500);
         } finally {
             restore_error_handler();
         }
