@@ -11,7 +11,7 @@ class Routing
 
     public function __construct() {}
 
-    public function add(string $method, string $path, string $controller_action)
+    public function add($method, $path, $controller_action)
     {
         $this->routes[] = array('method' => $method, 'path' => ltrim($path, '/'), 'controller_action' => $controller_action);
     }

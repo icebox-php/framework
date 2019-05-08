@@ -83,7 +83,7 @@ class App {
         return self::$project_directory;
     }
 
-    public static function root_url(string $path = '', Array $params = [], $url_prefix = null) {
+    public static function root_url($path = '', Array $params = [], $url_prefix = null) {
       // set params in path
       $prepared_path = self::append_params_to_path($path, $params);
 
@@ -93,7 +93,7 @@ class App {
       return $url_prefix . '://' . self::$root_url . $prepared_path;
     }
 
-    public static function url(string $path = '', Array $params = [], $url_prefix = null) {
+    public static function url($path = '', Array $params = [], $url_prefix = null) {
       // set params in path
       $prepared_path = self::append_params_to_path($path, $params);
 
@@ -244,7 +244,7 @@ class App {
         return array(new $controller, $action);
     }
 
-    private static function append_params_to_path(string $path = '', Array $params = []) {
+    private static function append_params_to_path($path = '', Array $params = []) {
         if(strpos($path, ':') == false) { return $path; }
 
         $path = trim($path, '/'); // remove trailing and leading slash

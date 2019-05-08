@@ -69,7 +69,7 @@ class Controller {
 
   }
 
-  public function yield($view = null) {
+  public function yield_html($view = null) {
     if($view == null) { $view = 'content'; }
     if(isset($this->_content[$view])) {
       echo $this->_content[$view];

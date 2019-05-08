@@ -12,7 +12,7 @@ php icebox generate crud box
 
 ## Test all column type
 
-php icebox g crud post title:string content:text published:boolean publish_date:date create_time:datetime decimal_col:decimal float_col:float int_col:integer time_col:time
+php icebox g crud post title:string picture:string content:text published:boolean publish_date:date create_time:datetime decimal_col:decimal float_col:float int_col:integer time_col:time
 
 -- db schema
 CREATE TABLE `posts` (
