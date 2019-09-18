@@ -12,8 +12,9 @@ php icebox generate crud box
 
 ## Test all column type
 
-php icebox g crud post title:string picture:string content:text published:boolean publish_date:date create_time:datetime decimal_col:decimal float_col:float int_col:integer time_col:time
+`php icebox g crud post title:string picture:string content:text published:boolean publish_date:date create_time:datetime decimal_col:decimal float_col:float int_col:integer time_col:time`
 
+```
 -- db schema
 CREATE TABLE `posts` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -28,8 +29,9 @@ CREATE TABLE `posts` (
   `time_col` time DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+```
 
-
+```
 ## Supported Column Types
 'boolean' => array( 'html_tag' => 'checkbox', 'type' => ''),
 'date' => array( 'html_tag' => 'input', 'type' => 'date'),
@@ -42,3 +44,4 @@ CREATE TABLE `posts` (
 'text' => array( 'html_tag' => 'textarea', 'type' => ''),
 <br>
 'time' => array( 'html_tag' => 'input', 'type' => 'time'),
+```
