@@ -31,8 +31,8 @@ CREATE TABLE `posts` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 ```
 
-```
 ## Supported Column Types
+```
 'boolean' => array( 'html_tag' => 'checkbox', 'type' => ''),
 'date' => array( 'html_tag' => 'input', 'type' => 'date'),
 'datetime' => array( 'html_tag' => 'input', 'type' => 'datetime-local'),
