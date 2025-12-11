@@ -4,11 +4,9 @@
     "description": "The Icebox Framework.",
     "keywords": ["framework", "icebox"],
     "homepage": "http://torovin.com/icebox",
-    "require": {
-        "icebox/activerecord": "@dev"
-    },
+    "require": {},
     "require-dev": {
-        "phpunit/phpunit": "6.5"
+        "phpunit/phpunit": "12.5.3"
     },
     "autoload": {
         "files": [
