@@ -1,5 +1,5 @@
 {
-    "name": "icebox/framework",
+    "name": "icebox-php/framework",
     "type": "library",
     "description": "The Icebox Framework.",
     "keywords": ["framework", "icebox"],
