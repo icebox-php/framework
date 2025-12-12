@@ -18,11 +18,11 @@ class TestHelper
         Config::initialize(function() {
             return [
                 'driver' => 'sqlite',
-                'host' => ':memory:',
                 'database' => ':memory:',
                 'username' => '',
-                'password' => '',
-                'charset' => 'utf8'
+                'password' => ''
+                // Note: 'host' and 'charset' are not used for SQLite; if you need this, create PR
+                // The Config class handles SQLite DSN specially
             ];
         });
 

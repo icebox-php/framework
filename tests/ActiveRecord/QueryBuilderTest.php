@@ -48,16 +48,60 @@ class QueryBuilderTest extends TestCase
     }
 
     /**
-     * Test where with comparison operator
+     * Test where with comparison operators
      */
-    public function testWhereWithOperator(): void
+    public function testWhereWithOperators(): void
     {
+        // Greater than
         $users = TestUserForQuery::where('age', '>', 25)->get();
-        
         $this->assertCount(2, $users); // John (30) and Bob (40)
         $names = array_map(function($user) { return $user->name; }, $users);
         $this->assertContains('John Doe', $names);
         $this->assertContains('Bob Johnson', $names);
+        
+        // Less than
+        $users = TestUserForQuery::where('age', '<', 30)->get();
+        $this->assertCount(1, $users); // Jane (25)
+        $this->assertEquals('Jane Smith', $users[0]->name);
+        
+        // Less than or equal
+        $users = TestUserForQuery::where('age', '<=', 30)->get();
+        $this->assertCount(2, $users); // John (30) and Jane (25)
+        
+        // Greater than or equal
+        $users = TestUserForQuery::where('age', '>=', 30)->get();
+        $this->assertCount(2, $users); // John (30) and Bob (40)
+        
+        // Not equal
+        $users = TestUserForQuery::where('active', '!=', 1)->get();
+        $this->assertCount(1, $users); // Bob (active = 0)
+        $this->assertEquals('Bob Johnson', $users[0]->name);
+    }
+    
+    /**
+     * Test where with LIKE operator
+     */
+    public function testWhereLike(): void
+    {
+        // Test LIKE with wildcard
+        $users = TestUserForQuery::where('name', 'LIKE', '%John%')->get();
+        $this->assertCount(2, $users); // John Doe and Bob Johnson (contains "John" in "Johnson")
+        $names = array_map(function($user) { return $user->name; }, $users);
+        $this->assertContains('John Doe', $names);
+        $this->assertContains('Bob Johnson', $names);
+        
+        $users = TestUserForQuery::where('name', 'LIKE', '%Jane%')->get();
+        $this->assertCount(1, $users);
+        $this->assertEquals('Jane Smith', $users[0]->name);
+        
+        // Test exact match with wildcards
+        $users = TestUserForQuery::where('name', 'LIKE', 'John%')->get();
+        $this->assertCount(1, $users);
+        $this->assertEquals('John Doe', $users[0]->name);
+        
+        // Test case insensitive (SQLite LIKE is case-insensitive by default)
+        $users = TestUserForQuery::where('name', 'LIKE', '%john%')->get();
+        $this->assertCount(2, $users); // Matches both John Doe and Bob Johnson
     }
 
     /**

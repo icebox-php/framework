@@ -48,22 +48,33 @@ class Config
      */
     private static function createConnection()
     {
-        $required = ['driver', 'host', 'database', 'username', 'password'];
-        
-        foreach ($required as $key) {
-            if (!isset(self::$config[$key])) {
-                throw new \InvalidArgumentException("Missing required configuration: {$key}");
-            }
+        $driver = self::$config['driver'] ?? null;
+        if (!$driver) {
+            throw new \InvalidArgumentException("Missing required configuration: driver");
         }
 
-        $driver = self::$config['driver'];
-        $host = self::$config['host'];
-        $database = self::$config['database'];
-        $username = self::$config['username'];
-        $password = self::$config['password'];
+        $database = self::$config['database'] ?? null;
+        if (!$database) {
+            throw new \InvalidArgumentException("Missing required configuration: database");
+        }
+
+        $username = self::$config['username'] ?? '';
+        $password = self::$config['password'] ?? '';
+        $host = self::$config['host'] ?? '';
         $charset = self::$config['charset'] ?? 'utf8mb4';
 
-        $dsn = "{$driver}:host={$host};dbname={$database};charset={$charset}";
+        // Handle SQLite specially since it has a different DSN format
+        if ($driver === 'sqlite') {
+            // For SQLite, database is the path (or :memory: for in-memory)
+            // Ignore host and charset parameters for SQLite
+            $dsn = "sqlite:{$database}";
+        } else {
+            // For other databases (MySQL, PostgreSQL), require host
+            if (!$host) {
+                throw new \InvalidArgumentException("Missing required configuration: host");
+            }
+            $dsn = "{$driver}:host={$host};dbname={$database};charset={$charset}";
+        }
 
         $options = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
