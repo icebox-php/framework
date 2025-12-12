@@ -175,7 +175,31 @@ try {
 
 # How to run testsuite
 
-$ vendor/bin/phpunit ./tests/
+You can run tests using the Icebox CLI:
+
+```bash
+php icebox test
+```
+
+This will run all tests in the `tests` folder.
+
+To run a specific test file or folder:
+
+```bash
+php icebox test tests/create_user_test.php
+php icebox test tests/Feature/
+```
+
+Any additional arguments are passed directly to PHPUnit, so you can use PHPUnit options:
+
+```bash
+php icebox test --filter testCreateUser
+php icebox test tests/UserTest.php --filter testCreateUser # more specific
+php icebox test --filter testCreateUser
+php icebox test --coverage-html coverage
+```
+
+For more options, see `php icebox test --help`.
 
 # Crud generator
 
