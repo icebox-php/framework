@@ -78,8 +78,11 @@ class QueryBuilder
             return $this;
         }
 
-        // Pattern 3: where('column', 'value') → equality
-        if ($value === null && $operator !== null) {
+        // Pattern 3: where('column', 'value') → equality (2 arguments)
+        // Check if this is a 2-argument call (operator is actually the value)
+        // We detect this by checking if operator is NOT a known SQL operator
+        $knownOperators = ['=', '!=', '<', '>', '<=', '>=', 'LIKE', 'IN', 'NOT IN', 'IS', 'IS NOT', 'BETWEEN'];
+        if ($value === null && $operator !== null && !in_array(strtoupper($operator), $knownOperators)) {
             $value = $operator;
             $operator = '=';
         }
@@ -103,7 +106,9 @@ class QueryBuilder
         if (is_array($column)) {
             $this->conditions[] = ['type' => 'or', 'conditions' => $column];
         } else {
-            if ($value === null && $operator !== null) {
+            // Check if this is a 2-argument call (operator is actually the value)
+            $knownOperators = ['=', '!=', '<', '>', '<=', '>=', 'LIKE', 'IN', 'NOT IN', 'IS', 'IS NOT', 'BETWEEN'];
+            if ($value === null && $operator !== null && !in_array(strtoupper($operator), $knownOperators)) {
                 $value = $operator;
                 $operator = '=';
             }
@@ -353,13 +358,33 @@ class QueryBuilder
         foreach ($this->conditions as $condition) {
             switch ($condition['type']) {
                 case 'and':
-                    $whereParts[] = $this->buildCondition($condition);
-                    $this->params[] = $condition['value'];
-                    break;
-                    
                 case 'or':
-                    $whereParts[] = $this->buildCondition($condition);
-                    $this->params[] = $condition['value'];
+                    $sql = $this->buildCondition($condition);
+                    $whereParts[] = $sql;
+                    
+                    // Add parameters based on condition type
+                    $value = $condition['value'];
+                    $operator = $condition['operator'];
+                    
+                    // For NULL values, no parameter needed
+                    if ($value === null && ($operator === 'IS' || $operator === 'IS NOT' || $operator === '=' || $operator === '!=')) {
+                        // No parameter to add
+                    }
+                    // For IN/NOT IN with array values
+                    elseif (($operator === 'IN' || $operator === 'NOT IN') && is_array($value)) {
+                        foreach ($value as $val) {
+                            $this->params[] = $val;
+                        }
+                    }
+                    // For BETWEEN with array values
+                    elseif ($operator === 'BETWEEN' && is_array($value) && count($value) === 2) {
+                        $this->params[] = $value[0];
+                        $this->params[] = $value[1];
+                    }
+                    // For other conditions
+                    else {
+                        $this->params[] = $value;
+                    }
                     break;
                     
                 case 'or_group':
@@ -377,7 +402,23 @@ class QueryBuilder
             }
         }
 
-        return implode(' AND ', $whereParts);
+        // Join all parts without additional AND since buildCondition already handles AND/OR
+        // But we need to handle the case where first condition is OR (shouldn't happen)
+        $where = '';
+        foreach ($whereParts as $part) {
+            if ($where === '') {
+                $where = $part;
+            } else {
+                // If part starts with OR, just append it
+                if (strtoupper(substr(trim($part), 0, 3)) === 'OR ') {
+                    $where .= ' ' . $part;
+                } else {
+                    $where .= ' AND ' . $part;
+                }
+            }
+        }
+        
+        return $where;
     }
 
     /**
