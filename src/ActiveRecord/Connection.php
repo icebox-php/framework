@@ -16,18 +16,23 @@ class Connection
      * Execute a SELECT query and return all results
      *
      * @param string $table
-     * @param array $conditions
-     * @param array $options
+     * @param string|array $conditions WHERE clause string or array of conditions
+     * @param array $options Query options (order, limit, offset)
+     * @param array $params Query parameters for WHERE clause
      * @return array
      */
-    public static function select(string $table, array $conditions = [], array $options = [])
+    public static function select(string $table, $conditions = '', array $options = [], array $params = [])
     {
         $sql = "SELECT * FROM {$table}";
-        $params = [];
 
-        if (!empty($conditions)) {
+        // Handle array conditions (backward compatibility)
+        if (is_array($conditions) && !empty($conditions)) {
             $where = self::buildWhereClause($conditions, $params);
             $sql .= " WHERE {$where}";
+        }
+        // Handle string WHERE clause
+        elseif (is_string($conditions) && $conditions !== '') {
+            $sql .= " WHERE {$conditions}";
         }
 
         if (isset($options['order'])) {

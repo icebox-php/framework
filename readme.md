@@ -4,7 +4,7 @@ This repository contains the core code of the Icebox framework.
 
 ## ActiveRecord Implementation
 
-Icebox includes a modern PDO-based ActiveRecord implementation with full CRUD operations.
+Icebox includes a modern PDO-based ActiveRecord implementation with Rails-style query builder.
 
 ### Database Configuration
 
@@ -51,10 +51,8 @@ class Post extends Model
 $user = new User(['name' => 'John', 'email' => 'john@example.com']);
 $user->save();
 
-// Read
+// Read by primary key
 $user = User::find(1);
-$users = User::all();
-$activeUsers = User::all(['active' => 1]);
 
 // Update
 $user = User::find(1);
@@ -68,24 +66,103 @@ $user->updateAttributes(['name' => 'Jane', 'email' => 'jane@example.com']);
 $user->delete();
 ```
 
-### Advanced Queries
+### Rails-style Query Builder
+
+Icebox uses a Rails-inspired query builder with a single `where()` method for all queries.
+
+#### Basic Queries
 
 ```php
-// Find by conditions (using Connection directly)
-$userData = \Icebox\ActiveRecord\Connection::selectOne('users', ['email' => 'john@example.com']);
-if ($userData) {
-    $user = new User($userData, true);
-}
+// Equality (multiple syntaxes)
+User::where('name', 'John')->get();
+User::where(['name' => 'John', 'active' => 1])->get();
 
-// Or find all matching conditions
-$activeUsers = User::all(['active' => 1]);
+// Comparison operators
+User::where('age', '>', 18)->get();
+User::where('age', '>=', 21)->get();
+User::where('name', 'LIKE', 'John%')->get();
 
-// Get dirty attributes (changed but not saved)
-if ($user->isDirty()) {
-    $changes = $user->getDirty();
-}
+// NULL checks (Rails-style)
+User::where('approved_at', null)->get();           // IS NULL
+User::where('approved_at', '!=', null)->get();     // IS NOT NULL
+User::whereNull('deleted_at')->get();
+User::whereNotNull('approved_at')->get();
 
-// Transactions
+// IN clauses
+User::where('id', [1, 2, 3])->get();               // IN (1,2,3)
+User::whereIn('category_id', [1, 2, 3])->get();
+User::whereNotIn('status', ['banned', 'inactive'])->get();
+
+// BETWEEN
+User::whereBetween('age', [18, 65])->get();
+
+// OR conditions
+User::where(['or' => ['status' => 'active', 'status' => 'pending']])->get();
+User::where('status', 'active')->orWhere('status', 'pending')->get();
+
+// Raw SQL
+User::where('price > cost * ?', [1.5])->get();
+
+// Get all records
+User::where()->get();
+User::where([])->get();
+```
+
+#### Method Chaining
+
+```php
+User::where('active', 1)
+    ->where('age', '>', 18)
+    ->orderBy('name', 'DESC')
+    ->limit(10)
+    ->offset(5)
+    ->get();
+```
+
+#### Aggregates and Checks
+
+```php
+// Count records
+$count = User::where('active', 1)->count();
+
+// Check if exists
+$exists = User::where('email', 'john@example.com')->exists();
+
+// Get first result
+$user = User::where('active', 1)->first();
+```
+
+### Model Methods Available
+
+- `find($id)` - Find by primary key
+- `where($column, $operator = null, $value = null)` - Query builder entry point
+- `save()` - Create or update record
+- `updateAttributes($attributes)` - Update multiple attributes
+- `delete()` - Delete record
+- `toArray()` - Convert to array
+- `isDirty()` - Check if model has changes
+- `getDirty()` - Get changed attributes
+
+### Query Builder Methods
+
+- `where($column, $operator = null, $value = null)` - Add WHERE condition
+- `orWhere($column, $operator = null, $value = null)` - Add OR WHERE condition
+- `whereNull($column)` - WHERE IS NULL
+- `whereNotNull($column)` - WHERE IS NOT NULL
+- `whereIn($column, array $values)` - WHERE IN
+- `whereNotIn($column, array $values)` - WHERE NOT IN
+- `whereBetween($column, array $values)` - WHERE BETWEEN
+- `orderBy($column, $direction = 'ASC')` - ORDER BY
+- `limit($limit)` - LIMIT
+- `offset($offset)` - OFFSET
+- `get()` - Execute and get results
+- `first()` - Get first result
+- `count()` - Get count of records
+- `exists()` - Check if any records exist
+
+### Transactions
+
+```php
 \Icebox\ActiveRecord\Connection::beginTransaction();
 try {
     $user1->save();
@@ -95,26 +172,6 @@ try {
     \Icebox\ActiveRecord\Connection::rollback();
 }
 ```
-
-### Model Methods Available
-
-- `find($id)` - Find by primary key
-- `all($conditions = [])` - Find all matching conditions
-- `save()` - Create or update record
-- `updateAttributes($attributes)` - Update multiple attributes
-- `delete()` - Delete record
-- `toArray()` - Convert to array
-- `isDirty()` - Check if model has changes
-- `getDirty()` - Get changed attributes
-
-### Connection Methods
-
-- `Connection::select($table, $conditions, $options)`
-- `Connection::selectOne($table, $conditions)`
-- `Connection::insert($table, $data)`
-- `Connection::update($table, $data, $conditions)`
-- `Connection::delete($table, $conditions)`
-- `Connection::query($sql, $params)` - Raw SQL queries
 
 # How to run testsuite
 

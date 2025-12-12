@@ -96,21 +96,22 @@ abstract class Model
     }
 
     /**
-     * Find all records
+     * Create a query builder instance
      *
-     * @param array $conditions Optional conditions
-     * @return static[]
+     * @param mixed $column
+     * @param mixed $operator
+     * @param mixed $value
+     * @return QueryBuilder
      */
-    public static function all(array $conditions = [])
+    public static function where($column = null, $operator = null, $value = null)
     {
-        $results = Connection::select(static::getTable(), $conditions);
-        $models = [];
-
-        foreach ($results as $result) {
-            $models[] = new static($result, true);
+        $builder = new QueryBuilder(static::class);
+        
+        if ($column !== null) {
+            return $builder->where($column, $operator, $value);
         }
-
-        return $models;
+        
+        return $builder;
     }
 
     /**
