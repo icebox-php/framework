@@ -1,10 +1,10 @@
 {
     "name": "icebox-php/framework",
-    "version": "0.1.0",
-    "license": "MIT",
     "type": "library",
     "description": "The Icebox Framework.",
     "keywords": ["framework", "icebox"],
+    "version": "0.1.0",
+    "license": "MIT",
     "homepage": "http://torovin.com/icebox",
     "require": {},
     "require-dev": {
