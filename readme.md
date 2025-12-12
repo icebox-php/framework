@@ -2,6 +2,120 @@
 
 This repository contains the core code of the Icebox framework.
 
+## ActiveRecord Implementation
+
+Icebox includes a modern PDO-based ActiveRecord implementation with full CRUD operations.
+
+### Database Configuration
+
+```php
+use Icebox\ActiveRecord\Config;
+
+Config::initialize(function() {
+    return [
+        'driver' => 'mysql',
+        'host' => 'localhost',
+        'database' => 'myapp',
+        'username' => 'root',
+        'password' => '',
+        'charset' => 'utf8mb4'
+    ];
+});
+```
+
+### Creating Models
+
+```php
+use Icebox\Model;
+
+class User extends Model
+{
+    // Optional: specify custom table name
+    protected static $table = 'users';
+    
+    // Optional: specify custom primary key
+    protected static $primaryKey = 'id';
+}
+
+class Post extends Model
+{
+    // Table name will be inferred as 'posts'
+    // Primary key will default to 'id'
+}
+```
+
+### Basic CRUD Operations
+
+```php
+// Create
+$user = new User(['name' => 'John', 'email' => 'john@example.com']);
+$user->save();
+
+// Read
+$user = User::find(1);
+$users = User::all();
+$activeUsers = User::all(['active' => 1]);
+
+// Update
+$user = User::find(1);
+$user->name = 'Jane';
+$user->save();
+
+// Or update multiple attributes
+$user->updateAttributes(['name' => 'Jane', 'email' => 'jane@example.com']);
+
+// Delete
+$user->delete();
+```
+
+### Advanced Queries
+
+```php
+// Find by conditions (using Connection directly)
+$userData = \Icebox\ActiveRecord\Connection::selectOne('users', ['email' => 'john@example.com']);
+if ($userData) {
+    $user = new User($userData, true);
+}
+
+// Or find all matching conditions
+$activeUsers = User::all(['active' => 1]);
+
+// Get dirty attributes (changed but not saved)
+if ($user->isDirty()) {
+    $changes = $user->getDirty();
+}
+
+// Transactions
+\Icebox\ActiveRecord\Connection::beginTransaction();
+try {
+    $user1->save();
+    $user2->save();
+    \Icebox\ActiveRecord\Connection::commit();
+} catch (Exception $e) {
+    \Icebox\ActiveRecord\Connection::rollback();
+}
+```
+
+### Model Methods Available
+
+- `find($id)` - Find by primary key
+- `all($conditions = [])` - Find all matching conditions
+- `save()` - Create or update record
+- `updateAttributes($attributes)` - Update multiple attributes
+- `delete()` - Delete record
+- `toArray()` - Convert to array
+- `isDirty()` - Check if model has changes
+- `getDirty()` - Get changed attributes
+
+### Connection Methods
+
+- `Connection::select($table, $conditions, $options)`
+- `Connection::selectOne($table, $conditions)`
+- `Connection::insert($table, $data)`
+- `Connection::update($table, $data, $conditions)`
+- `Connection::delete($table, $conditions)`
+- `Connection::query($sql, $params)` - Raw SQL queries
+
 # How to run testsuite
 
 $ vendor/bin/phpunit ./tests/

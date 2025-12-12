@@ -2,8 +2,8 @@
 
 namespace Icebox;
 
-use ActiveRecord\Model as ArModel;
+use Icebox\ActiveRecord\Model as ActiveRecordModel;
 
-class Model extends ArModel {
+class Model extends ActiveRecordModel {
   
 }
