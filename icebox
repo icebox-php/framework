@@ -25,9 +25,20 @@ function cli_show_specific_help_generate() {
   echo "\n";
 }
 
+function cli_show_specific_help_test() {
+  echo "Usage:\n";
+  echo "  php icebox test [test-file] [options]\n\n";
+  echo "Run PHPUnit tests. If no arguments are provided, runs all tests in the 'tests' folder.\n";
+  echo "You can specify a test file (e.g., tests/create_user_test.php) or a folder.\n";
+  echo "Additional options are passed directly to PHPUnit.\n";
+  echo "\n";
+}
+
 function cli_show_specific_help($args) {
   if($args[2] == 'g' || $args[2] == 'generate') {
     cli_show_specific_help_generate($args);
+  } else if($args[2] == 'test') {
+    cli_show_specific_help_test();
   }
 }
 
@@ -237,6 +248,33 @@ function cli_run_generate_crud($singular, $args) {
   cli_insert_resource_route($plural);
 }
 
+function cli_run_test($args) {
+  // Remove the first two arguments: script name and 'test'
+  $test_args = array_slice($args, 2);
+  
+  // Build PHPUnit command
+  $phpunit = 'vendor/bin/phpunit';
+  if (!file_exists($phpunit)) {
+    echo "Error: PHPUnit not found at $phpunit. Run 'composer install' first.\n";
+    exit(1);
+  }
+  
+  $command = escapeshellcmd($phpunit);
+  
+  // If no arguments provided, default to tests folder
+  if (empty($test_args)) {
+    $test_args[] = 'tests';
+  }
+  
+  foreach ($test_args as $arg) {
+    $command .= ' ' . escapeshellarg($arg);
+  }
+  
+  echo "Running: $command\n";
+  passthru($command, $return_var);
+  exit($return_var);
+}
+
 if(count($argv) == 1) { // no arguments
   cli_show_main_help();
 
@@ -262,5 +300,7 @@ if(count($argv) == 1) { // no arguments
       echo "Option missing\n";
       echo "Try: php icebox -h <command-name>\n";
     }
+  } else if($argv[1] == 'test') {
+    cli_run_test($argv);
   }
 }
