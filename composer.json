@@ -13,7 +13,7 @@
             "src/helper.php"
         ],
         "psr-4": {
-          "Icebox\\": "src/icebox/"
+          "Icebox\\": "src/"
         }
     },
     "autoload-dev": {
