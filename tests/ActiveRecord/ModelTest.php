@@ -233,6 +233,23 @@ class ModelTest extends TestCase
     }
 
     /**
+     * Test toSql method through Model interface
+     */
+    public function testToSqlThroughModel(): void
+    {
+        $sql = TestUser::where('active', 1)->toSql();
+        $this->assertEquals("SELECT * FROM users WHERE active = 1", $sql);
+        
+        // Test with string value
+        $sql = TestUser::where('name', 'John Doe')->toSql();
+        $this->assertEquals("SELECT * FROM users WHERE name = 'John Doe'", $sql);
+        
+        // Test with NULL
+        $sql = TestUser::whereNull('approved_at')->toSql();
+        $this->assertEquals("SELECT * FROM users WHERE approved_at IS NULL", $sql);
+    }
+
+    /**
      * Test constructor with exists parameter
      */
     public function testConstructorWithExists(): void

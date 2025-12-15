@@ -464,6 +464,7 @@ try {
 | `select($columns)` | SELECT specific columns |
 | `join($table, $first, $operator, $second)` | JOIN clause |
 | `leftJoin($table, $first, $operator, $second)` | LEFT JOIN clause |
+| `toSql()` | Get the interpolated SQL string for debugging |
 
 ### Connection Methods
 
@@ -598,6 +599,14 @@ Connection::query($sql, $params);
 $lastQuery = Connection::getLastQuery();
 echo "SQL: " . $lastQuery['sql'] . "\n";
 echo "Params: " . print_r($lastQuery['params'], true) . "\n";
+
+// Use toSql() to get interpolated SQL string for debugging
+$query = User::where('active', 1)->where('age', '>', 18);
+echo $query->toSql(); // Output: SELECT * FROM users WHERE active = 1 AND age > 18
+
+// Works with complex conditions
+$query = User::whereIn('id', [1, 2, 3])->whereNull('deleted_at');
+echo $query->toSql(); // Output: SELECT * FROM users WHERE id IN (1,2,3) AND deleted_at IS NULL
 ```
 
 ## Examples Repository

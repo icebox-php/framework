@@ -459,4 +459,91 @@ class QueryBuilder
         // Standard condition
         return "{$prefix}{$column} {$operator} ?";
     }
+
+    /**
+     * Format a value for SQL interpolation
+     *
+     * @param mixed $value
+     * @return string
+     */
+    private function formatValueForSql($value): string
+    {
+        if ($value === null) {
+            return 'NULL';
+        }
+        
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+        
+        if (is_int($value) || is_float($value)) {
+            return (string) $value;
+        }
+        
+        if (is_string($value)) {
+            // Simple escaping for single quotes
+            $escaped = str_replace("'", "''", $value);
+            return "'{$escaped}'";
+        }
+        
+        // For arrays (should be handled separately in IN clauses)
+        if (is_array($value)) {
+            $formatted = array_map([$this, 'formatValueForSql'], $value);
+            return implode(', ', $formatted);
+        }
+        
+        // Fallback
+        return "'" . (string) $value . "'";
+    }
+
+    /**
+     * Get the SQL representation of the query
+     *
+     * @return string The SQL query with values interpolated
+     */
+    public function toSql(): string
+    {
+        // Build WHERE clause (this also builds $this->params)
+        $where = $this->buildWhereClause();
+        
+        // Build the complete SQL
+        $table = $this->model::getTable();
+        $sql = "SELECT * FROM {$table}";
+        
+        if ($where !== '') {
+            $sql .= " WHERE {$where}";
+        }
+        
+        // Add ORDER BY
+        if (!empty($this->order)) {
+            $orderParts = [];
+            foreach ($this->order as $order) {
+                $orderParts[] = "{$order[0]} {$order[1]}";
+            }
+            $sql .= " ORDER BY " . implode(', ', $orderParts);
+        }
+        
+        // Add LIMIT
+        if ($this->limit !== null) {
+            $sql .= " LIMIT {$this->limit}";
+        }
+        
+        // Add OFFSET
+        if ($this->offset !== null) {
+            $sql .= " OFFSET {$this->offset}";
+        }
+        
+        // Interpolate parameters (replace ? with formatted values)
+        $parts = explode('?', $sql);
+        $result = '';
+        
+        for ($i = 0; $i < count($parts); $i++) {
+            $result .= $parts[$i];
+            if ($i < count($this->params)) {
+                $result .= $this->formatValueForSql($this->params[$i]);
+            }
+        }
+        
+        return $result;
+    }
 }
