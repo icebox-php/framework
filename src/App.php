@@ -9,6 +9,9 @@ use ErrorException;
 use Exception;
 use Error;
 
+if (!defined('WARNING')) { define('WARNING', false); }
+if (!defined('DEBUG')) { define('DEBUG', false); }
+
 class App {
     public static $controller_namespace  = 'App\Controller\\';
 
@@ -56,7 +59,7 @@ class App {
     }
 
     public static function catch_warning_error() {
-      if(defined('CATCH_WARNING') && CATCH_WARNING == true) {
+      if(defined('WARNING') && WARNING == true) {
         set_error_handler(function($errno, $errstr, $errfile, $errline) {
           if (!(error_reporting() & $errno)) {
             return;
@@ -143,7 +146,7 @@ class App {
         } catch(ErrorException $e) {
             $msg = '';
 
-            if(defined('ICEBOX_DEBUG') && ICEBOX_DEBUG == true) {
+            if(defined('DEBUG') && DEBUG == true) {
               $msg .= "ErrorException: ".$e->getMessage();
               $msg .= "\n<br>\n";
               $msg .= Debug::details($e);
@@ -158,7 +161,7 @@ class App {
 
           $msg = '';
 
-          if(defined('ICEBOX_DEBUG') && ICEBOX_DEBUG == true) {
+          if(defined('DEBUG') && DEBUG == true) {
             $msg .= "Exception: ".$e->getMessage();
             $msg .= "\n<br>\n";
             $msg .= Debug::details($e);
@@ -171,7 +174,7 @@ class App {
         } catch(Error $e) {
           $msg = '';
 
-          if(defined('ICEBOX_DEBUG') && ICEBOX_DEBUG == true) {
+          if(defined('DEBUG') && DEBUG == true) {
             $msg .= "Error: ".$e->getMessage();
             $msg .= "\n<br>\n";
             $msg .= Debug::details($e);
