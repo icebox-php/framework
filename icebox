@@ -1,5 +1,10 @@
 <?php
 
+// Define APP_ROOT_DIR if not already defined
+if (!defined('ROOT_DIR')) {
+    define('ROOT_DIR', getcwd());
+}
+
 use ActiveRecord\Utils;
 
 // foreach($argv as $value)
@@ -137,7 +142,7 @@ function cli_create_controller($controller_name, $model_name, $singular, $plural
   $controller_text = ob_get_clean();
 
   $file_name = "app/Controller/$controller_name.php";
-  $file_full_path = PROJECT_SOURCE_DIRECTORY . "/app/Controller/$controller_name.php";
+  $file_full_path = ROOT_DIR . "/app/Controller/$controller_name.php";
   cli_create_file($file_name, $file_full_path, $controller_text);
 }
 
@@ -147,7 +152,7 @@ function cli_create_model($model_name) {
   $model_text = ob_get_clean();
 
   $file_name = "app/Model/$model_name.php";
-  $file_full_path = PROJECT_SOURCE_DIRECTORY . "/app/Model/$model_name.php";
+  $file_full_path = ROOT_DIR . "/app/Model/$model_name.php";
   cli_create_file($file_name, $file_full_path, $model_text);
 }
 
@@ -162,11 +167,11 @@ function cli_create_view__form($singular, $plural, $attrs) {
   $view_text = ob_get_clean();
 
   $file_name = "app/View/$view_folder/_form.html.php";
-  $file_full_path = PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder/_form.html.php";
+  $file_full_path = ROOT_DIR . "/app/View/$view_folder/_form.html.php";
 
-  if (!is_dir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder")) {
+  if (!is_dir(ROOT_DIR . "/app/View/$view_folder")) {
     // dir doesn't exist, make it
-    mkdir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder");
+    mkdir(ROOT_DIR . "/app/View/$view_folder");
   }
   cli_create_file($file_name, $file_full_path, $view_text);
 }
@@ -179,11 +184,11 @@ function cli_create_view_edit($singular, $plural) {
   $view_text = ob_get_clean();
 
   $file_name = "app/View/$view_folder/edit.html.php";
-  $file_full_path = PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder/edit.html.php";
+  $file_full_path = ROOT_DIR . "/app/View/$view_folder/edit.html.php";
 
-  if (!is_dir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder")) {
+  if (!is_dir(ROOT_DIR . "/app/View/$view_folder")) {
     // dir doesn't exist, make it
-    mkdir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder");
+    mkdir(ROOT_DIR . "/app/View/$view_folder");
   }
   cli_create_file($file_name, $file_full_path, $view_text);
 }
@@ -196,11 +201,11 @@ function cli_create_view_index($singular, $plural) {
   $view_text = ob_get_clean();
 
   $file_name = "app/View/$view_folder/index.html.php";
-  $file_full_path = PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder/index.html.php";
+  $file_full_path = ROOT_DIR . "/app/View/$view_folder/index.html.php";
 
-  if (!is_dir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder")) {
+  if (!is_dir(ROOT_DIR . "/app/View/$view_folder")) {
     // dir doesn't exist, make it
-    mkdir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder");
+    mkdir(ROOT_DIR . "/app/View/$view_folder");
   }
   cli_create_file($file_name, $file_full_path, $view_text);
 }
@@ -213,11 +218,11 @@ function cli_create_view_new($singular, $plural) {
   $view_text = ob_get_clean();
 
   $file_name = "app/View/$view_folder/new.html.php";
-  $file_full_path = PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder/new.html.php";
+  $file_full_path = ROOT_DIR . "/app/View/$view_folder/new.html.php";
 
-  if (!is_dir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder")) {
+  if (!is_dir(ROOT_DIR . "/app/View/$view_folder")) {
     // dir doesn't exist, make it
-    mkdir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder");
+    mkdir(ROOT_DIR . "/app/View/$view_folder");
   }
   cli_create_file($file_name, $file_full_path, $view_text);
 }
@@ -230,11 +235,11 @@ function cli_create_view_show($singular, $plural) {
   $view_text = ob_get_clean();
 
   $file_name = "app/View/$view_folder/show.html.php";
-  $file_full_path = PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder/show.html.php";
+  $file_full_path = ROOT_DIR . "/app/View/$view_folder/show.html.php";
 
-  if (!is_dir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder")) {
+  if (!is_dir(ROOT_DIR . "/app/View/$view_folder")) {
     // dir doesn't exist, make it
-    mkdir(PROJECT_SOURCE_DIRECTORY . "/app/View/$view_folder");
+    mkdir(ROOT_DIR . "/app/View/$view_folder");
   }
   cli_create_file($file_name, $file_full_path, $view_text);
 }
@@ -242,7 +247,7 @@ function cli_create_view_show($singular, $plural) {
 function cli_insert_resource_route($plural) {
   $controller = ucfirst($plural);
 
-  $route_file = PROJECT_SOURCE_DIRECTORY . '/config/routes.php';
+  $route_file = ROOT_DIR . '/config/routes.php';
   // $f = file_get_contents($route_file);
 
   $route_text = '';
