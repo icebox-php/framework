@@ -8,11 +8,33 @@ use ActiveRecord\Utils;
 // }
 
 function cli_show_main_help() {
+  echo "Icebox Framework CLI Tool\n";
+  echo "=========================\n\n";
+  
   echo "Usage:\n";
-  echo "  php icebox [options]\n\n";
+  echo "  php icebox <command> [options] [arguments]\n\n";
+
+  echo "Available Commands:\n";
+  echo "  g, generate crud <name> [attributes]  # Generate CRUD resources (controller, model, views)\n";
+  echo "  test [test-file] [options]            # Run PHPUnit tests\n";
+  echo "  console, c                            # Start interactive PHP console (REPL)\n";
+  echo "\n";
 
   echo "Options:\n";
   echo "  -h, --help, help         # Show this help message and quit\n";
+  echo "  help <command>           # Show help for a specific command\n";
+  echo "\n";
+
+  echo "Examples:\n";
+  echo "  php icebox generate crud post title:string content:text\n";
+  echo "  php icebox test\n";
+  echo "  php icebox test tests/UserTest.php\n";
+  echo "  php icebox console\n";
+  echo "  php icebox c\n";
+  echo "\n";
+
+  echo "For more information about a command, use:\n";
+  echo "  php icebox help <command>\n";
   echo "\n";
 }
 
