@@ -312,9 +312,8 @@ class QueryBuilderTest extends TestCase
         // We'll just test that the method doesn't throw errors
         $builder = TestUserForQuery::where('age > ?', [25]);
         $this->assertInstanceOf(QueryBuilder::class, $builder);
-        // Note: Currently raw SQL parameters are not interpolated in toSql()
-        // The ? is removed but parameter value is not inserted due to params reset in buildWhereClause()
-        $this->assertEquals("SELECT * FROM users WHERE age > ", $builder->toSql());
+        // Raw SQL parameters are now interpolated in toSql()
+        $this->assertEquals("SELECT * FROM users WHERE age > 25", $builder->toSql());
         
         // The actual query would need to be executed to test properly
         $users = $builder->get();

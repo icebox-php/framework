@@ -220,31 +220,52 @@ class QueryBuilder
     }
 
     /**
+     * Build SQL query with placeholders
+     *
+     * @return array ['sql' => string, 'params' => array]
+     */
+    private function buildSql(): array
+    {
+        $table = $this->model::getTable();
+        $where = $this->buildWhereClause();
+        
+        $sql = "SELECT * FROM {$table}";
+        
+        if ($where !== '') {
+            $sql .= " WHERE {$where}";
+        }
+        
+        // Add ORDER BY
+        if (!empty($this->order)) {
+            $orderParts = [];
+            foreach ($this->order as $order) {
+                $orderParts[] = "{$order[0]} {$order[1]}";
+            }
+            $sql .= " ORDER BY " . implode(', ', $orderParts);
+        }
+        
+        // Add LIMIT
+        if ($this->limit !== null) {
+            $sql .= " LIMIT {$this->limit}";
+        }
+        
+        // Add OFFSET
+        if ($this->offset !== null) {
+            $sql .= " OFFSET {$this->offset}";
+        }
+        
+        return ['sql' => $sql, 'params' => $this->params];
+    }
+
+    /**
      * Execute query and get results
      *
      * @return array
      */
     public function get()
     {
-        $table = $this->model::getTable();
-        $where = $this->buildWhereClause();
-        
-        $options = [];
-        if (!empty($this->order)) {
-            $orderParts = [];
-            foreach ($this->order as $order) {
-                $orderParts[] = "{$order[0]} {$order[1]}";
-            }
-            $options['order'] = implode(', ', $orderParts);
-        }
-        if ($this->limit !== null) {
-            $options['limit'] = $this->limit;
-        }
-        if ($this->offset !== null) {
-            $options['offset'] = $this->offset;
-        }
-
-        $results = Connection::select($table, $where, $options, $this->params);
+        $built = $this->buildSql();
+        $results = Connection::query($built['sql'], $built['params'])->fetchAll(\PDO::FETCH_ASSOC);
         $models = [];
 
         foreach ($results as $result) {
@@ -304,8 +325,7 @@ class QueryBuilder
      */
     private function addRawCondition($sql, $params)
     {
-        $this->conditions[] = ['type' => 'raw', 'sql' => $sql];
-        $this->params = array_merge($this->params, $params);
+        $this->conditions[] = ['type' => 'raw', 'sql' => $sql, 'params' => $params];
     }
 
     /**
@@ -398,6 +418,12 @@ class QueryBuilder
                     
                 case 'raw':
                     $whereParts[] = $condition['sql'];
+                    // Add raw SQL parameters
+                    if (isset($condition['params'])) {
+                        foreach ($condition['params'] as $param) {
+                            $this->params[] = $param;
+                        }
+                    }
                     break;
             }
         }
@@ -503,35 +529,9 @@ class QueryBuilder
      */
     public function toSql(): string
     {
-        // Build WHERE clause (this also builds $this->params)
-        $where = $this->buildWhereClause();
-        
-        // Build the complete SQL
-        $table = $this->model::getTable();
-        $sql = "SELECT * FROM {$table}";
-        
-        if ($where !== '') {
-            $sql .= " WHERE {$where}";
-        }
-        
-        // Add ORDER BY
-        if (!empty($this->order)) {
-            $orderParts = [];
-            foreach ($this->order as $order) {
-                $orderParts[] = "{$order[0]} {$order[1]}";
-            }
-            $sql .= " ORDER BY " . implode(', ', $orderParts);
-        }
-        
-        // Add LIMIT
-        if ($this->limit !== null) {
-            $sql .= " LIMIT {$this->limit}";
-        }
-        
-        // Add OFFSET
-        if ($this->offset !== null) {
-            $sql .= " OFFSET {$this->offset}";
-        }
+        $built = $this->buildSql();
+        $sql = $built['sql'];
+        $params = $built['params'];
         
         // Interpolate parameters (replace ? with formatted values)
         $parts = explode('?', $sql);
@@ -539,8 +539,8 @@ class QueryBuilder
         
         for ($i = 0; $i < count($parts); $i++) {
             $result .= $parts[$i];
-            if ($i < count($this->params)) {
-                $result .= $this->formatValueForSql($this->params[$i]);
+            if ($i < count($params)) {
+                $result .= $this->formatValueForSql($params[$i]);
             }
         }
         
