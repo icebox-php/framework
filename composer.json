@@ -5,9 +5,9 @@
     "keywords": ["framework", "icebox"],
     "license": "MIT",
     "homepage": "http://torovin.com/icebox",
-    "require": {},
     "require-dev": {
-        "phpunit/phpunit": "12.5.3"
+        "phpunit/phpunit": "12.5.3",
+        "psy/psysh": "^0.12.17"
     },
     "autoload": {
         "files": [

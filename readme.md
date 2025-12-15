@@ -173,6 +173,55 @@ try {
 }
 ```
 
+# Interactive Console
+
+Icebox includes an interactive PHP console (REPL) powered by PsySH, similar to Rails console:
+
+```bash
+php icebox console
+php icebox c  # Short alias
+```
+
+This starts an interactive PHP shell. When used within an Icebox application, the framework and application environment will be automatically loaded.
+
+## Features
+
+- **Tab completion** for class names, methods, and variables
+- **Syntax highlighting** for better readability
+- **Documentation lookup** with `doc function_name`
+- **Source code viewing** with `show function_name`
+- **Command history** with up/down arrows
+- **Error handling** with pretty output
+
+## Example Usage
+
+```bash
+$ php icebox console
+Loading development environment (PHP 8.5.0)
+Type 'exit' to quit, 'help' for help.
+
+Psy Shell v0.12.17 (PHP 8.5.0 — cli) by Justin Hileman
+>>> echo App::root_url();
+http://localhost/myapp
+>>> $user = User::find(1);
+>>> echo $user->name;
+John Doe
+>>> exit
+```
+
+## Available Commands in PsySH
+
+- `exit` or `quit` - Exit the console
+- `help` - Show help
+- `doc function_name` - Show documentation for a function
+- `show function_name` - Show source code for a function
+- `ls` - List variables in current scope
+- `clear` - Clear the screen
+
+## Note for Application Usage
+
+When using the console within an Icebox application, the application bootstrap will handle loading the framework and environment. The console command simply starts PsySH with the development environment.
+
 # How to run testsuite
 
 You can run tests using the Icebox CLI:

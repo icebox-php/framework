@@ -11,8 +11,8 @@ function cli_show_main_help() {
   echo "Usage:\n";
   echo "  php icebox [options]\n\n";
 
-  echo "Options:";
-  echo "  -h, [--help]       # Show this help message and quit";
+  echo "Options:\n";
+  echo "  -h, --help, help         # Show this help message and quit\n";
   echo "\n";
 }
 
@@ -34,11 +34,26 @@ function cli_show_specific_help_test() {
   echo "\n";
 }
 
+function cli_show_specific_help_console() {
+  echo "Usage:\n";
+  echo "  php icebox console\n";
+  echo "  php icebox c\n\n";
+  echo "Start an interactive PHP console (REPL) with Icebox framework loaded.\n";
+  echo "This provides access to all Icebox classes and your application models.\n";
+  echo "\n";
+  echo "Examples:\n";
+  echo "  php icebox console          # Start the console\n";
+  echo "  php icebox c                # Short alias\n";
+  echo "\n";
+}
+
 function cli_show_specific_help($args) {
   if($args[2] == 'g' || $args[2] == 'generate') {
     cli_show_specific_help_generate($args);
   } else if($args[2] == 'test') {
     cli_show_specific_help_test();
+  } else if($args[2] == 'console' || $args[2] == 'c') {
+    cli_show_specific_help_console();
   }
 }
 
@@ -275,10 +290,29 @@ function cli_run_test($args) {
   exit($return_var);
 }
 
+function cli_run_console($args) {
+  // Check if PsySH is available
+  $psysh = 'vendor/bin/psysh';
+  if (!file_exists($psysh)) {
+    echo "Error: PsySH not found at $psysh. Run 'composer install' first.\n";
+    exit(1);
+  }
+  
+  // Show message and load PsySH directly
+  echo "Loading development environment (PHP " . PHP_VERSION . ")\n";
+  echo "Type 'exit' to quit, 'help' for help.\n\n";
+  
+  // Run PsySH directly without bootstrap config
+  // The application will handle autoloading via its own bootstrap
+  passthru(escapeshellcmd($psysh), $return_var);
+  
+  exit($return_var);
+}
+
 if(count($argv) == 1) { // no arguments
   cli_show_main_help();
 
-} else if($argv[1] == '-h' || $argv[1] == '--help') { // help arguments
+} else if($argv[1] == 'help' || $argv[1] == '-h' || $argv[1] == '--help') { // help arguments
 
   if(isset($argv[2])) {
     cli_show_specific_help($argv);
@@ -302,5 +336,7 @@ if(count($argv) == 1) { // no arguments
     }
   } else if($argv[1] == 'test') {
     cli_run_test($argv);
+  } else if($argv[1] == 'console' || $argv[1] == 'c') {
+    cli_run_console($argv);
   }
 }
