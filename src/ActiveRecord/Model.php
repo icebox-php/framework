@@ -220,6 +220,24 @@ abstract class Model
     }
 
     /**
+     * Select specific columns
+     *
+     * @param mixed $columns Column name(s) as string or array
+     * @return QueryBuilder
+     */
+    public static function select($columns = ['*'])
+    {
+        $builder = new QueryBuilder(static::class);
+        
+        // Pass all arguments to handle multiple arguments
+        if (func_num_args() > 0) {
+            return call_user_func_array([$builder, 'select'], func_get_args());
+        }
+        
+        return $builder->select($columns);
+    }
+
+    /**
      * Get first result matching conditions
      *
      * @return Model|null

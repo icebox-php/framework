@@ -208,7 +208,7 @@ class QueryBuilderTest extends TestCase
         $this->assertEquals('John Doe', $users[0]->name);
         $this->assertEquals('Jane Smith', $users[1]->name);
         $this->assertEquals("SELECT * FROM users ORDER BY id ASC LIMIT 2", $query->toSql());
-        
+
         $query = TestUserForQuery::orderBy('id', 'ASC')->limit(1)->offset(1);
         $users = $query->get();
         $this->assertCount(1, $users);
@@ -318,6 +318,111 @@ class QueryBuilderTest extends TestCase
         // The actual query would need to be executed to test properly
         $users = $builder->get();
         $this->assertIsArray($users);
+    }
+
+    /**
+     * Test select with string columns
+     */
+    public function testSelectWithString(): void
+    {
+        $query = TestUserForQuery::select('id, name');
+        $this->assertEquals("SELECT id, name FROM users", $query->toSql());
+        
+        $query = TestUserForQuery::select('id');
+        $this->assertEquals("SELECT id FROM users", $query->toSql());
+    }
+
+    /**
+     * Test select with array of columns
+     */
+    public function testSelectWithArray(): void
+    {
+        $query = TestUserForQuery::select(['id', 'name']);
+        $this->assertEquals("SELECT id, name FROM users", $query->toSql());
+        
+        $query = TestUserForQuery::select(['id']);
+        $this->assertEquals("SELECT id FROM users", $query->toSql());
+    }
+
+    /**
+     * Test select with where clause
+     */
+    public function testSelectWithWhere(): void
+    {
+        $query = TestUserForQuery::select('id')->where('active', 1);
+        $this->assertEquals("SELECT id FROM users WHERE active = 1", $query->toSql());
+        
+        $query = TestUserForQuery::where('active', 1)->select('id', 'name');
+        $this->assertEquals("SELECT id, name FROM users WHERE active = 1", $query->toSql());
+    }
+
+    /**
+     * Test select with order by, limit, offset
+     */
+    public function testSelectWithOrderLimitOffset(): void
+    {
+        $query = TestUserForQuery::select('id', 'name')
+            ->where('active', 1)
+            ->orderBy('name', 'ASC')
+            ->limit(10)
+            ->offset(5);
+        $this->assertEquals("SELECT id, name FROM users WHERE active = 1 ORDER BY name ASC LIMIT 10 OFFSET 5", $query->toSql());
+    }
+
+    /**
+     * Test select with get() returns only selected columns
+     */
+    public function testSelectWithGet(): void
+    {
+        $query = TestUserForQuery::select('id', 'name', 'email')
+            ->orderBy('id', 'ASC');
+        $users = $query->get();
+        
+        $this->assertNotEmpty($users);
+        $firstUser = $users[0];
+        $secondUser = $users[1];
+        
+        // Should have selected columns
+        $this->assertArrayHasKey('id', $firstUser->toArray());
+        $this->assertArrayHasKey('name', $firstUser->toArray());
+        $this->assertArrayHasKey('email', $firstUser->toArray());
+        
+        // Verify specific values with ORDER BY id for consistency
+        $this->assertEquals('John Doe', $firstUser->name);
+        $this->assertEquals('john@example.com', $firstUser->email);
+        $this->assertEquals('Jane Smith', $secondUser->name);
+        $this->assertEquals('jane@example.com', $secondUser->email);
+        
+        // Check SQL
+        $this->assertEquals("SELECT id, name, email FROM users ORDER BY id ASC", $query->toSql());
+    }
+
+    /**
+     * Test select chaining
+     */
+    public function testSelectChaining(): void
+    {
+        $query = TestUserForQuery::select('id')->select('name');
+        // Last select should override previous
+        $this->assertEquals("SELECT name FROM users", $query->toSql());
+    }
+
+    /**
+     * Test select with empty array defaults to *
+     */
+    public function testSelectEmptyArray(): void
+    {
+        $query = TestUserForQuery::select([]);
+        $this->assertEquals("SELECT * FROM users", $query->toSql());
+    }
+
+    /**
+     * Test select with empty string defaults to *
+     */
+    public function testSelectEmptyString(): void
+    {
+        $query = TestUserForQuery::select('');
+        $this->assertEquals("SELECT * FROM users", $query->toSql());
     }
 
     /**

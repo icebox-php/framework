@@ -40,6 +40,11 @@ class QueryBuilder
     private $params = [];
 
     /**
+     * @var array Selected columns
+     */
+    private $columns = ['*'];
+
+    /**
      * Constructor
      *
      * @param Model $model
@@ -220,6 +225,45 @@ class QueryBuilder
     }
 
     /**
+     * Select specific columns
+     *
+     * @param mixed $columns Column name(s) as string or array
+     * @return self
+     */
+    public function select($columns = ['*'])
+    {
+        // Handle multiple arguments: select('id', 'name')
+        if (func_num_args() > 1) {
+            $this->columns = func_get_args();
+            return $this;
+        }
+        
+        if (is_string($columns)) {
+            // Handle empty string
+            if ($columns === '') {
+                $this->columns = ['*'];
+                return $this;
+            }
+            
+            // Handle comma-separated string: "id, name"
+            if (strpos($columns, ',') !== false) {
+                $this->columns = array_map('trim', explode(',', $columns));
+            } else {
+                $this->columns = [$columns];
+            }
+        } elseif (is_array($columns)) {
+            // Handle empty array
+            if (empty($columns)) {
+                $this->columns = ['*'];
+            } else {
+                $this->columns = $columns;
+            }
+        }
+        
+        return $this;
+    }
+
+    /**
      * Build SQL query with placeholders
      *
      * @return array ['sql' => string, 'params' => array]
@@ -229,7 +273,9 @@ class QueryBuilder
         $table = $this->model::getTable();
         $where = $this->buildWhereClause();
         
-        $sql = "SELECT * FROM {$table}";
+        // Build SELECT clause
+        $columns = empty($this->columns) ? '*' : implode(', ', $this->columns);
+        $sql = "SELECT {$columns} FROM {$table}";
         
         if ($where !== '') {
             $sql .= " WHERE {$where}";
