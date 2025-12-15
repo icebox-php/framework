@@ -286,4 +286,119 @@ class QueryBuilderTest extends TestCase
         $users = TestUserForQuery::where([])->get();
         $this->assertCount(3, $users);
     }
+
+    /**
+     * Test static methods return QueryBuilder instances
+     */
+    public function testStaticMethodsReturnQueryBuilder(): void
+    {
+        // Test that each static method returns a QueryBuilder instance
+        $this->assertInstanceOf(QueryBuilder::class, TestUserForQuery::where('active', 1));
+        $this->assertInstanceOf(QueryBuilder::class, TestUserForQuery::orWhere('active', 1));
+        $this->assertInstanceOf(QueryBuilder::class, TestUserForQuery::whereNull('approved_at'));
+        $this->assertInstanceOf(QueryBuilder::class, TestUserForQuery::whereNotNull('approved_at'));
+        $this->assertInstanceOf(QueryBuilder::class, TestUserForQuery::whereIn('id', [1, 2]));
+        $this->assertInstanceOf(QueryBuilder::class, TestUserForQuery::whereNotIn('id', [1, 2]));
+        $this->assertInstanceOf(QueryBuilder::class, TestUserForQuery::whereBetween('age', [20, 30]));
+        $this->assertInstanceOf(QueryBuilder::class, TestUserForQuery::orderBy('name', 'ASC'));
+        $this->assertInstanceOf(QueryBuilder::class, TestUserForQuery::limit(10));
+        $this->assertInstanceOf(QueryBuilder::class, TestUserForQuery::offset(0));
+    }
+
+    /**
+     * Test method chaining from static calls
+     */
+    public function testMethodChainingFromStaticCalls(): void
+    {
+        // Chain multiple static method calls
+        $users = TestUserForQuery::whereIn('id', [1, 2])
+            ->whereNull('approved_at')
+            ->orderBy('name', 'ASC')
+            ->limit(10)
+            ->get();
+        
+        $this->assertCount(2, $users);
+        $this->assertEquals('Jane Smith', $users[0]->name);
+        $this->assertEquals('John Doe', $users[1]->name);
+        
+        // Test combination of where and whereIn
+        $users = TestUserForQuery::where('active', 1)
+            ->whereIn('id', [1, 2])
+            ->get();
+        $this->assertCount(2, $users);
+        
+        // Test whereBetween with orderBy
+        $users = TestUserForQuery::whereBetween('age', [20, 35])
+            ->orderBy('age', 'DESC')
+            ->get();
+        $this->assertCount(2, $users);
+        $this->assertEquals('John Doe', $users[0]->name); // Age 30
+        $this->assertEquals('Jane Smith', $users[1]->name); // Age 25
+    }
+
+    /**
+     * Test error handling in static methods
+     */
+    public function testErrorHandling(): void
+    {
+        // Test whereBetween with wrong number of values
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('whereBetween requires exactly 2 values');
+        TestUserForQuery::whereBetween('age', [20]); // Only 1 value, should throw
+    }
+
+    /**
+     * Test backward compatibility with old syntax
+     */
+    public function testBackwardCompatibility(): void
+    {
+        // Old syntax: where()->method() should still work
+        $users1 = TestUserForQuery::where()->whereIn('id', [1, 2])->get();
+        $users2 = TestUserForQuery::whereIn('id', [1, 2])->get();
+        $this->assertEquals(count($users1), count($users2));
+        
+        // Old syntax with conditions
+        $users1 = TestUserForQuery::where('active', 1)->whereIn('id', [1, 2])->get();
+        $users2 = TestUserForQuery::where('active', 1)->whereIn('id', [1, 2])->get();
+        $this->assertEquals(count($users1), count($users2));
+        
+        // Mixed: where()->method() vs direct method()
+        $builder1 = TestUserForQuery::where()->orderBy('name', 'ASC');
+        $builder2 = TestUserForQuery::orderBy('name', 'ASC');
+        $this->assertInstanceOf(QueryBuilder::class, $builder1);
+        $this->assertInstanceOf(QueryBuilder::class, $builder2);
+    }
+
+    /**
+     * Test static get method with conditions
+     */
+    public function testStaticGetWithConditions(): void
+    {
+        // get() without conditions returns all
+        $allUsers = TestUserForQuery::get();
+        $this->assertCount(3, $allUsers);
+        
+        // get() after where conditions
+        $activeUsers = TestUserForQuery::where('active', 1)->get();
+        $this->assertCount(2, $activeUsers);
+        
+        // Verify the actual data
+        $names = array_map(function($user) { return $user->name; }, $activeUsers);
+        $this->assertContains('John Doe', $names);
+        $this->assertContains('Jane Smith', $names);
+    }
+
+    /**
+     * Test whereIn with empty array
+     */
+    public function testWhereInWithEmptyArray(): void
+    {
+        // whereIn with empty array should return no results
+        $users = TestUserForQuery::whereIn('id', [])->get();
+        $this->assertCount(0, $users);
+        
+        // whereNotIn with empty array should return all results
+        $users = TestUserForQuery::whereNotIn('id', [])->get();
+        $this->assertCount(3, $users);
+    }
 }
