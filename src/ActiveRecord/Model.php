@@ -115,6 +115,151 @@ abstract class Model
     }
 
     /**
+     * Add OR WHERE conditions
+     *
+     * @param mixed $column
+     * @param mixed $operator
+     * @param mixed $value
+     * @return QueryBuilder
+     */
+    public static function orWhere($column, $operator = null, $value = null)
+    {
+        return (new QueryBuilder(static::class))->orWhere($column, $operator, $value);
+    }
+
+    /**
+     * Add WHERE NULL condition
+     *
+     * @param string $column
+     * @return QueryBuilder
+     */
+    public static function whereNull($column)
+    {
+        return (new QueryBuilder(static::class))->whereNull($column);
+    }
+
+    /**
+     * Add WHERE NOT NULL condition
+     *
+     * @param string $column
+     * @return QueryBuilder
+     */
+    public static function whereNotNull($column)
+    {
+        return (new QueryBuilder(static::class))->whereNotNull($column);
+    }
+
+    /**
+     * Add WHERE IN condition
+     *
+     * @param string $column
+     * @param array $values
+     * @return QueryBuilder
+     */
+    public static function whereIn($column, array $values)
+    {
+        return (new QueryBuilder(static::class))->whereIn($column, $values);
+    }
+
+    /**
+     * Add WHERE NOT IN condition
+     *
+     * @param string $column
+     * @param array $values
+     * @return QueryBuilder
+     */
+    public static function whereNotIn($column, array $values)
+    {
+        return (new QueryBuilder(static::class))->whereNotIn($column, $values);
+    }
+
+    /**
+     * Add WHERE BETWEEN condition
+     *
+     * @param string $column
+     * @param array $values [min, max]
+     * @return QueryBuilder
+     */
+    public static function whereBetween($column, array $values)
+    {
+        return (new QueryBuilder(static::class))->whereBetween($column, $values);
+    }
+
+    /**
+     * Add ORDER BY clause
+     *
+     * @param string $column
+     * @param string $direction ASC|DESC
+     * @return QueryBuilder
+     */
+    public static function orderBy($column, $direction = 'ASC')
+    {
+        return (new QueryBuilder(static::class))->orderBy($column, $direction);
+    }
+
+    /**
+     * Add LIMIT clause
+     *
+     * @param int $limit
+     * @return QueryBuilder
+     */
+    public static function limit($limit)
+    {
+        return (new QueryBuilder(static::class))->limit($limit);
+    }
+
+    /**
+     * Add OFFSET clause
+     *
+     * @param int $offset
+     * @return QueryBuilder
+     */
+    public static function offset($offset)
+    {
+        return (new QueryBuilder(static::class))->offset($offset);
+    }
+
+    /**
+     * Get first result matching conditions
+     *
+     * @return Model|null
+     */
+    public static function first()
+    {
+        return (new QueryBuilder(static::class))->first();
+    }
+
+    /**
+     * Get count of records matching conditions
+     *
+     * @return int
+     */
+    public static function count()
+    {
+        return (new QueryBuilder(static::class))->count();
+    }
+
+    /**
+     * Check if any records exist matching conditions
+     *
+     * @return bool
+     */
+    public static function exists()
+    {
+        return (new QueryBuilder(static::class))->exists();
+    }
+
+    /**
+     * Execute query and get all results
+     *
+     * @return array
+     */
+    public static function get()
+    {
+        return (new QueryBuilder(static::class))->get();
+    }
+
+    /**
      * Save the model to database
      *
      * @return bool

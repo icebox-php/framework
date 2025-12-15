@@ -124,11 +124,11 @@ class QueryBuilderTest extends TestCase
     public function testWhereNull(): void
     {
         // All users have null approved_at in test data
-        $users = TestUserForQuery::where()->whereNull('approved_at')->get();
+        $users = TestUserForQuery::whereNull('approved_at')->get();
         $this->assertCount(3, $users);
         
         // No users have non-null approved_at
-        $users = TestUserForQuery::where()->whereNotNull('approved_at')->get();
+        $users = TestUserForQuery::whereNotNull('approved_at')->get();
         $this->assertCount(0, $users);
     }
 
@@ -137,10 +137,10 @@ class QueryBuilderTest extends TestCase
      */
     public function testWhereIn(): void
     {
-        $users = TestUserForQuery::where()->whereIn('id', [1, 2])->get();
+        $users = TestUserForQuery::whereIn('id', [1, 2])->get();
         $this->assertCount(2, $users);
         
-        $users = TestUserForQuery::where()->whereNotIn('id', [1, 2])->get();
+        $users = TestUserForQuery::whereNotIn('id', [1, 2])->get();
         $this->assertCount(1, $users);
         $this->assertEquals('Bob Johnson', $users[0]->name);
     }
@@ -155,7 +155,7 @@ class QueryBuilderTest extends TestCase
         $this->assertEquals('Jane Smith', $users[0]->name); // J comes before Jo
         $this->assertEquals('John Doe', $users[1]->name);
         
-        $users = TestUserForQuery::where()->orderBy('age', 'DESC')->get();
+        $users = TestUserForQuery::orderBy('age', 'DESC')->get();
         $this->assertEquals('Bob Johnson', $users[0]->name); // Age 40
         $this->assertEquals('John Doe', $users[1]->name); // Age 30
         $this->assertEquals('Jane Smith', $users[2]->name); // Age 25
@@ -166,12 +166,12 @@ class QueryBuilderTest extends TestCase
      */
     public function testLimitAndOffset(): void
     {
-        $users = TestUserForQuery::where()->orderBy('id', 'ASC')->limit(2)->get();
+        $users = TestUserForQuery::orderBy('id', 'ASC')->limit(2)->get();
         $this->assertCount(2, $users);
         $this->assertEquals('John Doe', $users[0]->name);
         $this->assertEquals('Jane Smith', $users[1]->name);
         
-        $users = TestUserForQuery::where()->orderBy('id', 'ASC')->limit(1)->offset(1)->get();
+        $users = TestUserForQuery::orderBy('id', 'ASC')->limit(1)->offset(1)->get();
         $this->assertCount(1, $users);
         $this->assertEquals('Jane Smith', $users[0]->name);
     }
@@ -200,7 +200,7 @@ class QueryBuilderTest extends TestCase
         $count = TestUserForQuery::where('age', '>', 30)->count();
         $this->assertEquals(1, $count);
         
-        $count = TestUserForQuery::where()->count();
+        $count = TestUserForQuery::count();
         $this->assertEquals(3, $count);
     }
 
@@ -267,10 +267,10 @@ class QueryBuilderTest extends TestCase
      */
     public function testWhereBetween(): void
     {
-        $users = TestUserForQuery::where()->whereBetween('age', [20, 35])->get();
+        $users = TestUserForQuery::whereBetween('age', [20, 35])->get();
         $this->assertCount(2, $users); // John (30) and Jane (25)
         
-        $users = TestUserForQuery::where()->whereBetween('age', [40, 50])->get();
+        $users = TestUserForQuery::whereBetween('age', [40, 50])->get();
         $this->assertCount(1, $users); // Bob (40)
         $this->assertEquals('Bob Johnson', $users[0]->name);
     }
@@ -280,7 +280,7 @@ class QueryBuilderTest extends TestCase
      */
     public function testEmptyWhere(): void
     {
-        $users = TestUserForQuery::where()->get();
+        $users = TestUserForQuery::get();
         $this->assertCount(3, $users);
         
         $users = TestUserForQuery::where([])->get();
