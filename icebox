@@ -2,7 +2,9 @@
 
 // Define APP_ROOT_DIR if not already defined
 if (!defined('ROOT_DIR')) {
-    define('ROOT_DIR', getcwd());
+  $root_dir = getcwd();
+  print("- warning: ROOT_DIR constant must be defined\n  setting this value as ROOT_DIR : " . getcwd() . "\n");
+  define('ROOT_DIR', getcwd());
 }
 
 use ActiveRecord\Utils;
