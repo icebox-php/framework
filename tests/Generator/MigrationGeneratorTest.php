@@ -207,42 +207,84 @@ class MigrationGeneratorTest extends TestCase
     }
 
     /**
-     * Test migration file creation
+     * Test migration file creation (SQL-based)
      */
     public function testMigrationFileCreation(): void
     {
         $migrationName = 'test_create_table';
         $upSql = 'CREATE TABLE test (id INT PRIMARY KEY)';
         $downSql = 'DROP TABLE test';
-        
+
         // Create migration file
         $filePath = MigrationGenerator::createMigrationFile($migrationName, $upSql, $downSql, self::$migrationsDir);
-        
+
         // Check that file was created
         $this->assertFileExists($filePath, 'Migration file should be created');
-        
+
         // Check file content
         $content = file_get_contents($filePath);
         $this->assertStringContainsString('<?php', $content);
         $this->assertStringContainsString('use Icebox\ActiveRecord\Connection;', $content);
         $this->assertStringContainsString($upSql, $content);
         $this->assertStringContainsString($downSql, $content);
-        
+
         // Check class name format
         $this->assertStringContainsString('class Migration', $content);
-        
+
         // Check that class can be loaded and instantiated
         require_once $filePath;
-        
+
         // Extract class name from file
         preg_match('/class\s+(\w+)/', $content, $matches);
         $className = $matches[1];
-        
+
         $this->assertTrue(class_exists($className), "Class $className should exist");
-        
+
         $migration = new $className();
         $this->assertTrue(method_exists($migration, 'up'), 'Migration should have up() method');
         $this->assertTrue(method_exists($migration, 'down'), 'Migration should have down() method');
+    }
+
+    /**
+     * Test DSL migration file creation (using smart parameter detection)
+     */
+    public function testDslMigrationFileCreation(): void
+    {
+        $migrationName = 'create_products_table';
+        $columns = ['name:string', 'price:decimal'];
+
+        // Create DSL migration file using unified API (smart detection)
+        $filePath = MigrationGenerator::createMigrationFile($migrationName, $columns, self::$migrationsDir);
+
+        // Check that file was created
+        $this->assertFileExists($filePath, 'DSL Migration file should be created');
+
+        // Check file content
+        $content = file_get_contents($filePath);
+        $this->assertStringContainsString('<?php', $content);
+        $this->assertStringContainsString('use Icebox\ActiveRecord\Migration\BaseMigration;', $content);
+        $this->assertStringContainsString('extends BaseMigration', $content);
+        $this->assertStringContainsString('$this->createTable(\'products\', function($t) {', $content);
+        $this->assertStringContainsString('$t->string(\'name\');', $content);
+        $this->assertStringContainsString('$t->decimal(\'price\');', $content);
+        $this->assertStringContainsString('$this->dropTable(\'products\');', $content);
+
+        // Check class name format
+        $this->assertStringContainsString('class Migration', $content);
+
+        // Check that class can be loaded and instantiated
+        require_once $filePath;
+
+        // Extract class name from file
+        preg_match('/class\s+(\w+)/', $content, $matches);
+        $className = $matches[1];
+
+        $this->assertTrue(class_exists($className), "Class $className should exist");
+
+        $migration = new $className();
+        $this->assertTrue(method_exists($migration, 'up'), 'Migration should have up() method');
+        $this->assertTrue(method_exists($migration, 'down'), 'Migration should have down() method');
+        $this->assertInstanceOf('Icebox\ActiveRecord\Migration\BaseMigration', $migration, 'Migration should extend base Migration class');
     }
 
     /**

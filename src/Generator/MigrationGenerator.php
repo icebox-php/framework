@@ -78,7 +78,138 @@ class MigrationGenerator
     }
 
     /**
-     * Generate SQL from migration name and columns
+     * Generate DSL code from migration name and columns
+     *
+     * @param string $migrationName
+     * @param array $columns Array of column definitions
+     * @return array [upCode, downCode]
+     */
+    public static function generateDsl(string $migrationName, array $columns): array
+    {
+        $tableName = self::extractTableName($migrationName);
+        $columnDefs = self::parseColumnAttributes($columns);
+
+        // Determine migration type
+        if (strpos($migrationName, 'create') === 0) {
+            // Create table migration
+            $upCode = self::generateCreateTableDsl($tableName, $columnDefs);
+            $downCode = self::generateDropTableDsl($tableName);
+
+        } elseif (strpos($migrationName, 'add') === 0) {
+            // Add column migration
+            $upCode = self::generateAddColumnDsl($tableName, $columnDefs);
+            $downCode = self::generateRemoveColumnDsl($tableName, $columnDefs);
+
+        } elseif (strpos($migrationName, 'remove') === 0) {
+            // Remove column migration (reverse of add)
+            $upCode = self::generateRemoveColumnDsl($tableName, $columnDefs);
+            $downCode = self::generateAddColumnDsl($tableName, $columnDefs);
+
+        } else {
+            // Default: empty migration
+            $upCode = "// Migration: {$migrationName}";
+            $downCode = "// Rollback: {$migrationName}";
+        }
+
+        return [$upCode, $downCode];
+    }
+
+    /**
+     * Generate create table DSL
+     *
+     * @param string $tableName
+     * @param array $columnDefs
+     * @return string
+     */
+    private static function generateCreateTableDsl(string $tableName, array $columnDefs): string
+    {
+        $code = "\$this->createTable('{$tableName}', function(\$t) {\n";
+
+        foreach ($columnDefs as $columnName => $columnType) {
+            $methodCall = self::generateColumnMethodCall($columnName, $columnType);
+            $code .= "    {$methodCall};\n";
+        }
+
+        $code .= "});";
+        return $code;
+    }
+
+    /**
+     * Generate drop table DSL
+     *
+     * @param string $tableName
+     * @return string
+     */
+    private static function generateDropTableDsl(string $tableName): string
+    {
+        return "\$this->dropTable('{$tableName}');";
+    }
+
+    /**
+     * Generate add column DSL
+     *
+     * @param string $tableName
+     * @param array $columnDefs
+     * @return string
+     */
+    private static function generateAddColumnDsl(string $tableName, array $columnDefs): string
+    {
+        $code = "";
+        foreach ($columnDefs as $columnName => $columnType) {
+            $methodCall = self::generateColumnMethodCall($columnName, $columnType);
+            $code .= "\$this->addColumn('{$tableName}', '{$columnName}', '{$columnType}');\n";
+            break; // Only handle first column for add/remove migrations
+        }
+        return trim($code);
+    }
+
+    /**
+     * Generate remove column DSL
+     *
+     * @param string $tableName
+     * @param array $columnDefs
+     * @return string
+     */
+    private static function generateRemoveColumnDsl(string $tableName, array $columnDefs): string
+    {
+        $code = "";
+        foreach ($columnDefs as $columnName => $columnType) {
+            $code .= "\$this->removeColumn('{$tableName}', '{$columnName}');\n";
+            break; // Only handle first column for add/remove migrations
+        }
+        return trim($code);
+    }
+
+    /**
+     * Generate column method call for create table
+     *
+     * @param string $columnName
+     * @param string $columnType
+     * @return string
+     */
+    private static function generateColumnMethodCall(string $columnName, string $columnType): string
+    {
+        $methodMap = [
+            'string' => 'string',
+            'text' => 'text',
+            'integer' => 'integer',
+            'bigint' => 'bigint',
+            'float' => 'float',
+            'decimal' => 'decimal',
+            'boolean' => 'boolean',
+            'date' => 'date',
+            'datetime' => 'datetime',
+            'timestamp' => 'timestamp',
+            'time' => 'time',
+            'binary' => 'binary',
+        ];
+
+        $method = isset($methodMap[$columnType]) ? $methodMap[$columnType] : 'string';
+        return "\$t->{$method}('{$columnName}')";
+    }
+
+    /**
+     * Generate SQL from migration name and columns (backward compatibility)
      *
      * @param string $migrationName
      * @param array $columns Array of column definitions
@@ -88,58 +219,58 @@ class MigrationGenerator
     {
         $tableName = self::extractTableName($migrationName);
         $columnDefs = self::parseColumnAttributes($columns);
-        
+
         // Determine migration type
         if (strpos($migrationName, 'create') === 0) {
             // Create table migration
             $sql = "CREATE TABLE {$tableName} (\n";
             $sql .= "  id INT AUTO_INCREMENT PRIMARY KEY";
-            
+
             $columnSql = [];
             foreach ($columnDefs as $columnName => $columnType) {
                 $sqlType = self::mapColumnTypeToSql($columnType);
                 $columnSql[] = "  {$columnName} {$sqlType}";
             }
-            
+
             if (!empty($columnSql)) {
                 $sql .= ",\n" . implode(",\n", $columnSql);
             }
-            
+
             $sql .= "\n)";
-            
+
             $upSql = $sql;
             $downSql = "DROP TABLE {$tableName}";
-            
+
         } elseif (strpos($migrationName, 'add') === 0) {
             // Add column migration
             $upSql = "ALTER TABLE {$tableName} ADD COLUMN ";
             $downSql = "ALTER TABLE {$tableName} DROP COLUMN ";
-            
+
             foreach ($columnDefs as $columnName => $columnType) {
                 $sqlType = self::mapColumnTypeToSql($columnType);
                 $upSql .= "{$columnName} {$sqlType}";
                 $downSql .= "{$columnName}";
                 break; // Only handle first column for add/remove migrations
             }
-            
+
         } elseif (strpos($migrationName, 'remove') === 0) {
             // Remove column migration (reverse of add)
             $upSql = "ALTER TABLE {$tableName} DROP COLUMN ";
             $downSql = "ALTER TABLE {$tableName} ADD COLUMN ";
-            
+
             foreach ($columnDefs as $columnName => $columnType) {
                 $sqlType = self::mapColumnTypeToSql($columnType);
                 $upSql .= "{$columnName}";
                 $downSql .= "{$columnName} {$sqlType}";
                 break; // Only handle first column for add/remove migrations
             }
-            
+
         } else {
             // Default: empty migration
             $upSql = "-- Migration: {$migrationName}";
             $downSql = "-- Rollback: {$migrationName}";
         }
-        
+
         return [$upSql, $downSql];
     }
 
@@ -156,7 +287,39 @@ class MigrationGenerator
     }
 
     /**
-     * Generate migration file content
+     * Generate migration file content (DSL-based)
+     *
+     * @param string $className
+     * @param string $upCode
+     * @param string $downCode
+     * @return string
+     */
+    public static function generateDslFileContent(string $className, string $upCode, string $downCode): string
+    {
+        $template = <<<PHP
+<?php
+
+use Icebox\ActiveRecord\Migration\BaseMigration;
+
+class {$className} extends BaseMigration
+{
+    public function up()
+    {
+{$upCode}
+    }
+
+    public function down()
+    {
+{$downCode}
+    }
+}
+
+PHP;
+        return $template;
+    }
+
+    /**
+     * Generate migration file content (SQL-based for backward compatibility)
      *
      * @param string $className
      * @param string $upSql
@@ -170,7 +333,7 @@ class MigrationGenerator
 
 use Icebox\ActiveRecord\Connection;
 
-class {$className} 
+class {$className}
 {
     public function up()
     {
@@ -190,32 +353,78 @@ PHP;
     }
 
     /**
-     * Create migration file
+     * Create migration file (DSL-based)
      *
      * @param string $migrationName
-     * @param string $upSql
-     * @param string $downSql
+     * @param array $columns
      * @param string $migrationsDir
      * @return string Path to created file
      */
-    public static function createMigrationFile(string $migrationName, string $upSql, string $downSql, string $migrationsDir): string
+    public static function createDslMigrationFile(string $migrationName, array $columns, string $migrationsDir): string
     {
         $timestamp = date('YmdHis');
         $className = self::generateClassName($migrationName, $timestamp);
-        $content = self::generateFileContent($className, $upSql, $downSql);
-        
+        list($upCode, $downCode) = self::generateDsl($migrationName, $columns);
+        $content = self::generateDslFileContent($className, $upCode, $downCode);
+
         // Ensure migrations directory exists
         if (!is_dir($migrationsDir)) {
             mkdir($migrationsDir, 0755, true);
         }
-        
+
         $fileName = "{$timestamp}_{$migrationName}.php";
         $filePath = $migrationsDir . '/' . $fileName;
-        
+
         if (file_put_contents($filePath, $content)) {
             return $filePath;
         }
-        
+
+        throw new \RuntimeException("Failed to create migration file: {$filePath}");
+    }
+
+    /**
+     * Create migration file (smart parameter detection for DSL vs SQL)
+     *
+     * @param string $migrationName
+     * @param array|string $param2 Either column array (DSL mode) or up SQL string (SQL mode)
+     * @param string|null $param3 Either migrations dir (DSL mode) or down SQL string (SQL mode)
+     * @param string|null $param4 Migrations directory (SQL mode only)
+     * @return string Path to created file
+     */
+    public static function createMigrationFile(string $migrationName, $param2, $param3 = null, $param4 = null): string
+    {
+        $timestamp = date('YmdHis');
+        $className = self::generateClassName($migrationName, $timestamp);
+
+        // Detect mode based on parameter types
+        if (is_array($param2)) {
+            // DSL mode: createMigrationFile('name', ['col:spec'], 'migrationsDir')
+            $columns = $param2;
+            $migrationsDir = $param3 ?? 'db/migrations';
+
+            list($upCode, $downCode) = self::generateDsl($migrationName, $columns);
+            $content = self::generateDslFileContent($className, $upCode, $downCode);
+        } else {
+            // SQL mode: createMigrationFile('name', 'upSql', 'downSql', 'migrationsDir')
+            $upSql = $param2;
+            $downSql = $param3;
+            $migrationsDir = $param4 ?? 'db/migrations';
+
+            $content = self::generateFileContent($className, $upSql, $downSql);
+        }
+
+        // Ensure migrations directory exists
+        if (!is_dir($migrationsDir)) {
+            mkdir($migrationsDir, 0755, true);
+        }
+
+        $fileName = "{$timestamp}_{$migrationName}.php";
+        $filePath = $migrationsDir . '/' . $fileName;
+
+        if (file_put_contents($filePath, $content)) {
+            return $filePath;
+        }
+
         throw new \RuntimeException("Failed to create migration file: {$filePath}");
     }
 
