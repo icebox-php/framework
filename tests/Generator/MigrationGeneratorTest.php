@@ -12,23 +12,54 @@ use Icebox\ActiveRecord\MigrationRunner;
  */
 class MigrationGeneratorTest extends TestCase
 {
-    private $testRootDir;
-    private $migrationsDir;
+    private static $migrationsDir;
+    private static $oldMigrationsDir;
+
+    public static function setUpBeforeClass(): void
+    {
+        parent::setUpBeforeClass();
+        self::prepareTestDbDir();
+    }
+
+    private static function delete_test_migration_files($migrations_dir) {
+        $files = glob($migrations_dir . '/*.php');
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                unlink($file);
+            }
+        }
+    }
+
+    private static function prepareTestDbDir()
+    {
+        $testRootDir = dirname(__DIR__); // __DIR__ . '/../../tests';
+        self::$migrationsDir = $testRootDir . '/db/migrations';
+        self::$oldMigrationsDir = $testRootDir . '/db/old-migrations';
+        
+        // Ensure /tests/db/migrations directory exists
+        if (!is_dir(self::$migrationsDir)) {
+            mkdir(self::$migrationsDir, 0755, true);
+        }
+        // delete test migration files
+        self::delete_test_migration_files(self::$migrationsDir);
+
+        // Ensure /tests/db/old-migrations directory exists
+        if (!is_dir(self::$oldMigrationsDir)) {
+            mkdir(self::$oldMigrationsDir, 0755, true);
+        }
+        // delete test migration files
+        self::delete_test_migration_files(self::$oldMigrationsDir);
+    }
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Initialize test database
         TestHelper::initializeTestDatabase();
-        
-        // Set up test migrations directory
-        $this->testRootDir = __DIR__ . '/../../tests';
-        $this->migrationsDir = $this->testRootDir . '/db/migrations';
-        if (!is_dir($this->migrationsDir)) {
-            mkdir($this->migrationsDir, 0755, true);
-        }
-        
+
+        // Note: prepareTestDbDir() moved to setUpBeforeClass()
+
         // Clear any existing test migration files
         $this->cleanupMigrationFiles();
     }
@@ -185,7 +216,7 @@ class MigrationGeneratorTest extends TestCase
         $downSql = 'DROP TABLE test';
         
         // Create migration file
-        $filePath = MigrationGenerator::createMigrationFile($migrationName, $upSql, $downSql, $this->migrationsDir);
+        $filePath = MigrationGenerator::createMigrationFile($migrationName, $upSql, $downSql, self::$migrationsDir);
         
         // Check that file was created
         $this->assertFileExists($filePath, 'Migration file should be created');
@@ -226,7 +257,7 @@ class MigrationGeneratorTest extends TestCase
         list($upSql, $downSql) = MigrationGenerator::generateSql($migrationName, $columns);
         
         // Create migration file
-        $filePath = MigrationGenerator::createMigrationFile($migrationName, $upSql, $downSql, $this->migrationsDir);
+        $filePath = MigrationGenerator::createMigrationFile($migrationName, $upSql, $downSql, self::$migrationsDir);
         
         // Check that file was created
         $this->assertFileExists($filePath, 'Migration file should be created');
@@ -305,7 +336,7 @@ class MigrationGeneratorTest extends TestCase
      */
     public function testMigrationRunnerSchemaTable(): void
     {
-        $runner = new MigrationRunner($this->migrationsDir);
+        $runner = new MigrationRunner(self::$migrationsDir);
         $result = $runner->createSchemaMigrationsTable();
         
         $this->assertTrue($result, 'Should create schema_migrations table');
@@ -327,11 +358,11 @@ class MigrationGeneratorTest extends TestCase
         $upSql = 'CREATE TABLE test_users (id INTEGER PRIMARY KEY, name VARCHAR(255))';
         $downSql = 'DROP TABLE test_users';
         
-        $filePath = MigrationGenerator::createMigrationFile($migrationName, $upSql, $downSql, $this->migrationsDir);
+        $filePath = MigrationGenerator::createMigrationFile($migrationName, $upSql, $downSql, self::$migrationsDir);
         $this->assertFileExists($filePath);
-        
+
         // Initialize migration runner
-        $runner = new MigrationRunner($this->migrationsDir);
+        $runner = new MigrationRunner(self::$migrationsDir);
         
         // Check status before migration
         $statusBefore = $runner->status();
@@ -369,10 +400,10 @@ class MigrationGeneratorTest extends TestCase
         ];
         
         foreach ($migrations as $migration) {
-            MigrationGenerator::createMigrationFile($migration['name'], $migration['up'], $migration['down'], $this->migrationsDir);
+            MigrationGenerator::createMigrationFile($migration['name'], $migration['up'], $migration['down'], self::$migrationsDir);
         }
-        
-        $runner = new MigrationRunner($this->migrationsDir);
+
+        $runner = new MigrationRunner(self::$migrationsDir);
         
         // Run all migrations
         $migrated = $runner->migrate();
@@ -400,10 +431,10 @@ class MigrationGeneratorTest extends TestCase
         ];
         
         foreach ($migrations as $migration) {
-            MigrationGenerator::createMigrationFile($migration['name'], $migration['up'], $migration['down'], $this->migrationsDir);
+            MigrationGenerator::createMigrationFile($migration['name'], $migration['up'], $migration['down'], self::$migrationsDir);
         }
-        
-        $runner = new MigrationRunner($this->migrationsDir);
+
+        $runner = new MigrationRunner(self::$migrationsDir);
         
         // Run all migrations
         $migrated = $runner->migrate();
@@ -428,10 +459,10 @@ class MigrationGeneratorTest extends TestCase
         $migrationName = 'test_invalid_migration';
         // Class name must match what MigrationRunner expects: Migration + timestamp + migration name
         $content = '<?php class Migration20251216000000_Test_Invalid_Migration { }';
-        $filePath = $this->migrationsDir . '/20251216000000_' . $migrationName . '.php';
+        $filePath = self::$migrationsDir . '/20251216000000_' . $migrationName . '.php';
         file_put_contents($filePath, $content);
-        
-        $runner = new MigrationRunner($this->migrationsDir);
+
+        $runner = new MigrationRunner(self::$migrationsDir);
         
         // Try to migrate - should fail with validation error
         $this->expectException(\RuntimeException::class);
@@ -445,14 +476,17 @@ class MigrationGeneratorTest extends TestCase
      */
     private function cleanupMigrationFiles(): void
     {
-        if (!is_dir($this->migrationsDir)) {
+        if (!is_dir(self::$migrationsDir)) {
             return;
         }
         
-        $files = glob($this->migrationsDir . '/*.php');
+        $files = glob(self::$migrationsDir . '/*.php');
+
+        // move migration files for manual inspection
         foreach ($files as $file) {
             if (is_file($file)) {
-                unlink($file);
+                $newFileName = self::$oldMigrationsDir . '/' . basename($file);
+                rename($file, $newFileName);
             }
         }
     }
