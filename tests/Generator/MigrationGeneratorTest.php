@@ -209,7 +209,7 @@ class MigrationGeneratorTest extends TestCase
     /**
      * Test migration file creation (SQL-based)
      */
-    public function testMigrationFileCreation(): void
+    public function testSqlMigrationFileCreation(): void
     {
         $migrationName = 'test_create_table';
         $upSql = 'CREATE TABLE test (id INT PRIMARY KEY)';
@@ -244,6 +244,34 @@ class MigrationGeneratorTest extends TestCase
         $this->assertTrue(method_exists($migration, 'up'), 'Migration should have up() method');
         $this->assertTrue(method_exists($migration, 'down'), 'Migration should have down() method');
     }
+
+    // /**
+    //  * Test generateColsForDSL method
+    //  */
+    // public function testGenerateColsForDSL(): void
+    // {
+    //     $migrationName = 'create_products_table';
+    //     $columns = ['name:string', 'price:decimal', 'active:boolean'];
+
+    //     $result = MigrationGenerator::generateColsForDSL($migrationName, $columns);
+
+    //     // Should return the same columns (normalized/validated)
+    //     $this->assertEquals($columns, $result);
+    // }
+
+    // /**
+    //  * Test generateColsForDSL with invalid column type
+    //  */
+    // public function testGenerateColsForDSLInvalidType(): void
+    // {
+    //     $migrationName = 'create_products_table';
+    //     $columns = ['name:invalid_type'];
+
+    //     $this->expectException(\InvalidArgumentException::class);
+    //     $this->expectExceptionMessage("Invalid column type 'invalid_type'");
+
+    //     MigrationGenerator::generateColsForDSL($migrationName, $columns);
+    // }
 
     /**
      * Test DSL migration file creation (using smart parameter detection)

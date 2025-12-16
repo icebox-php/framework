@@ -77,6 +77,36 @@ class MigrationGenerator
         return isset($typeMap[$phpType]) ? $typeMap[$phpType] : $typeMap['string'];
     }
 
+    // /**
+    //  * Generate column specifications for DSL migration generation
+    //  *
+    //  * @param string $migrationName
+    //  * @param array $columns Array of column definitions like ['name:string', 'price:decimal']
+    //  * @return array Normalized column specifications for DSL
+    //  */
+    // public static function generateColsForDSL(string $migrationName, array $columns): array
+    // {
+    //     // Parse column attributes to validate format
+    //     $parsed = self::parseColumnAttributes($columns);
+
+    //     // Validate that all columns have valid types
+    //     $validTypes = ['string', 'text', 'integer', 'bigint', 'float', 'decimal', 'boolean', 'date', 'datetime', 'timestamp', 'time', 'binary'];
+
+    //     foreach ($parsed as $columnName => $columnType) {
+    //         if (!in_array($columnType, $validTypes)) {
+    //             throw new \InvalidArgumentException("Invalid column type '$columnType' for column '$columnName'. Valid types: " . implode(', ', $validTypes));
+    //         }
+    //     }
+
+    //     // For create table migrations, ensure we have basic structure
+    //     if (strpos($migrationName, 'create') === 0) {
+    //         // Could add default 'id' column or timestamps here if needed
+    //         // But for now, just return the validated columns
+    //     }
+
+    //     return $columns; // Return original format since it's already correct for DSL
+    // }
+
     /**
      * Generate DSL code from migration name and columns
      *
