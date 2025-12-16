@@ -66,7 +66,11 @@ abstract class TestCase extends PHPUnitTestCase
     protected function getMethod(object $object, string $methodName): \ReflectionMethod
     {
         $reflection = new \ReflectionClass($object);
-        return $reflection->getMethod($methodName);
+        $method = $reflection->getMethod($methodName);
+        if (PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+        return $method;
     }
 
     /**
@@ -75,7 +79,11 @@ abstract class TestCase extends PHPUnitTestCase
     protected function getProperty(object $object, string $propertyName): \ReflectionProperty
     {
         $reflection = new \ReflectionClass($object);
-        return $reflection->getProperty($propertyName);
+        $property = $reflection->getProperty($propertyName);
+        if (PHP_VERSION_ID < 80100) {
+            $property->setAccessible(true);
+        }
+        return $property;
     }
 
     /**
