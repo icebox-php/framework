@@ -16,6 +16,7 @@ Thumbs.db
 # PHPUnit
 .phpunit.result.cache
 /coverage/
+tests/db
 
 # Build
 /build/
@@ -34,6 +35,7 @@ Thumbs.db
 
 # Test files
 test_*.php
+tests/db/migrations/
 
 # Development artifacts
 *.cache

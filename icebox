@@ -8,6 +8,7 @@ if (!defined('ROOT_DIR')) {
 }
 
 use Icebox\ActiveRecord\lib\Utils;
+use Icebox\Generator\MigrationGenerator;
 
 // foreach($argv as $value)
 // {
@@ -301,134 +302,22 @@ function cli_run_generate_crud($singular, $args) {
 }
 
 /* Migration generator functions */
-function cli_create_migration($migration_name, $up_sql, $down_sql) {
-  $timestamp = date('YmdHis');
-  $className = 'Migration' . $timestamp . '_' . str_replace(' ', '_', ucwords(preg_replace('/[^a-zA-Z0-9]/', ' ', $migration_name)));
-  
-  ob_start();
-  $className = $className;
-  $upSQL = $up_sql;
-  $downSQL = $down_sql;
-  include(__DIR__ . '/template/migration.php');
-  $migration_text = ob_get_clean();
-
-  $migrations_dir = ROOT_DIR . '/db/migrations';
-  if (!is_dir($migrations_dir)) {
-    mkdir($migrations_dir, 0755, true);
-  }
-
-  $file_name = "db/migrations/{$timestamp}_{$migration_name}.php";
-  $file_full_path = ROOT_DIR . "/{$file_name}";
-  cli_create_file($file_name, $file_full_path, $migration_text);
-}
-
-function cli_generate_table_name_from_migration_name($migration_name) {
-  // Extract table name from migration name patterns
-  // create_posts_table -> posts
-  // add_user_id_to_posts -> posts
-  // remove_title_from_posts -> posts
-  // create_join_table_for_posts_and_tags -> posts_tags
-  
-  if (preg_match('/^create_(.+)_table$/', $migration_name, $matches)) {
-    return $matches[1];
-  } elseif (preg_match('/^(add|remove|change)_(.+)_to_(.+)$/', $migration_name, $matches)) {
-    return $matches[3];
-  } elseif (preg_match('/^create_join_table_for_(.+)_and_(.+)$/', $migration_name, $matches)) {
-    return $matches[1] . '_' . $matches[2];
-  } elseif (preg_match('/^create_(.+)$/', $migration_name, $matches)) {
-    return $matches[1];
-  }
-  
-  // Default: use the migration name as table name
-  return $migration_name;
-}
-
-function cli_generate_sql_from_columns($migration_name, $columns) {
-  $table_name = cli_generate_table_name_from_migration_name($migration_name);
-  $column_defs = generator_split_attr_get_column_names($columns);
-  
-  // Map PHP types to SQL types
-  $type_map = [
-    'string' => 'VARCHAR(255)',
-    'text' => 'TEXT',
-    'integer' => 'INT',
-    'bigint' => 'BIGINT',
-    'float' => 'FLOAT',
-    'decimal' => 'DECIMAL(10,2)',
-    'boolean' => 'BOOLEAN',
-    'date' => 'DATE',
-    'datetime' => 'DATETIME',
-    'timestamp' => 'TIMESTAMP',
-    'time' => 'TIME',
-    'binary' => 'BLOB',
-  ];
-  
-  // Determine if this is a create table or alter table
-  if (strpos($migration_name, 'create') === 0) {
-    // Create table migration
-    $sql = "CREATE TABLE {$table_name} (\n";
-    $sql .= "  id INT AUTO_INCREMENT PRIMARY KEY";
-    
-    $column_sql = [];
-    foreach ($column_defs as $column_name => $column_type) {
-      $sql_type = isset($type_map[$column_type]) ? $type_map[$column_type] : $type_map['string'];
-      $column_sql[] = "  {$column_name} {$sql_type}";
-    }
-    
-    if (!empty($column_sql)) {
-      $sql .= ",\n" . implode(",\n", $column_sql);
-    }
-    
-    $sql .= "\n)";
-    
-    $up_sql = $sql;
-    $down_sql = "DROP TABLE {$table_name}";
-    
-  } elseif (strpos($migration_name, 'add') === 0) {
-    // Add column migration
-    $up_sql = "ALTER TABLE {$table_name} ADD COLUMN ";
-    $down_sql = "ALTER TABLE {$table_name} DROP COLUMN ";
-    
-    foreach ($column_defs as $column_name => $column_type) {
-      $sql_type = isset($type_map[$column_type]) ? $type_map[$column_type] : $type_map['string'];
-      $up_sql .= "{$column_name} {$sql_type}";
-      $down_sql .= "{$column_name}";
-      break; // Only handle first column for add/remove migrations
-    }
-    
-  } elseif (strpos($migration_name, 'remove') === 0) {
-    // Remove column migration (reverse of add)
-    $up_sql = "ALTER TABLE {$table_name} DROP COLUMN ";
-    $down_sql = "ALTER TABLE {$table_name} ADD COLUMN ";
-    
-    foreach ($column_defs as $column_name => $column_type) {
-      $sql_type = isset($type_map[$column_type]) ? $type_map[$column_type] : $type_map['string'];
-      $up_sql .= "{$column_name}";
-      $down_sql .= "{$column_name} {$sql_type}";
-      break; // Only handle first column for add/remove migrations
-    }
-    
-  } else {
-    // Default: empty migration
-    $up_sql = "-- Migration: {$migration_name}";
-    $down_sql = "-- Rollback: {$migration_name}";
-  }
-  
-  return [$up_sql, $down_sql];
-}
-
 function cli_run_generate_migration($migration_name, $args) {
   echo "Migration generator started\n";
   
   // Get columns from command arguments
   $columns = array_slice($args, 4);
   
-  // Generate SQL
-  list($up_sql, $down_sql) = cli_generate_sql_from_columns($migration_name, $columns);
+  // Generate SQL using MigrationGenerator
+  list($up_sql, $down_sql) = MigrationGenerator::generateSql($migration_name, $columns);
   
   // Create migration file
-  cli_create_migration($migration_name, $up_sql, $down_sql);
+  $migrations_dir = ROOT_DIR . '/db/migrations';
+  $filePath = MigrationGenerator::createMigrationFile($migration_name, $up_sql, $down_sql, $migrations_dir);
   
+  // Get relative path for display
+  $relativePath = str_replace(ROOT_DIR . '/', '', $filePath);
+  echo "create  $relativePath\n";
   echo "Migration created successfully!\n";
 }
 /* ./Migration generator functions */
