@@ -1,14 +1,37 @@
 <?php
 
+// Load Composer autoloader
+require_once __DIR__ . '/vendor/autoload.php';
+
 // Define APP_ROOT_DIR if not already defined
 if (!defined('ROOT_DIR')) {
-  $root_dir = getcwd();
-  print("- warning: ROOT_DIR constant must be defined\n  setting this value as ROOT_DIR : " . getcwd() . "\n");
+  // print("- warning: ROOT_DIR constant must be defined\n  setting this value as ROOT_DIR : " . getcwd() . "\n");
   define('ROOT_DIR', getcwd());
 }
 
 use Icebox\ActiveRecord\lib\Utils;
 use Icebox\Generator\MigrationGenerator;
+use Icebox\ActiveRecord\MigrationRunner;
+use Icebox\ActiveRecord\Config;
+
+// // Initialize database connection if not already initialized
+// if (!Config::isInitialized()) {
+//     // Default to SQLite database in project root
+//     $dbPath = ROOT_DIR . '/db/development.sqlite3';
+//     $dbDir = dirname($dbPath);
+//     if (!is_dir($dbDir)) {
+//         mkdir($dbDir, 0755, true);
+//     }
+    
+//     Config::initialize(function() use ($dbPath) {
+//         return [
+//             'driver' => 'sqlite',
+//             'database' => $dbPath,
+//             'username' => '',
+//             'password' => ''
+//         ];
+//     });
+// }
 
 // foreach($argv as $value)
 // {
@@ -25,6 +48,10 @@ function cli_show_main_help() {
   echo "Available Commands:\n";
   echo "  g, generate crud <name> [attributes]  # Generate CRUD resources (controller, model, views)\n";
   echo "  g, generate migration <name> [columns] # Generate database migration\n";
+  echo "  db:migrate                            # Run pending database migrations\n";
+  echo "  db:migrate:status                     # Show migration status\n";
+  echo "  db:rollback [steps=N]                 # Rollback last N migrations (default: 1)\n";
+  echo "  db:reset                              # Rollback all migrations\n";
   echo "  test [test-file] [options]            # Run PHPUnit tests\n";
   echo "  console, c                            # Start interactive PHP console (REPL)\n";
   echo "\n";
@@ -37,6 +64,11 @@ function cli_show_main_help() {
   echo "Examples:\n";
   echo "  php icebox generate crud post title:string content:text\n";
   echo "  php icebox generate migration create_posts_table title:string content:text\n";
+  echo "  php icebox db:migrate\n";
+  echo "  php icebox db:migrate:status\n";
+  echo "  php icebox db:rollback\n";
+  echo "  php icebox db:rollback steps=2\n";
+  echo "  php icebox db:reset\n";
   echo "  php icebox test\n";
   echo "  php icebox test tests/UserTest.php\n";
   echo "  php icebox console\n";
@@ -322,6 +354,111 @@ function cli_run_generate_migration($migration_name, $args) {
 }
 /* ./Migration generator functions */
 
+/* Migration runner functions */
+function cli_run_db_migrate() {
+  echo "Running database migrations...\n";
+  
+  try {
+    $runner = new MigrationRunner();
+    $migrated = $runner->migrate();
+    
+    if (empty($migrated)) {
+      echo "No pending migrations.\n";
+    } else {
+      echo "Successfully ran " . count($migrated) . " migration(s):\n";
+      foreach ($migrated as $file) {
+        echo "  - " . basename($file) . "\n";
+      }
+    }
+  } catch (\Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+    exit(1);
+  }
+}
+
+function cli_run_db_status() {
+  echo "Migration Status\n";
+  echo "================\n\n";
+  
+  try {
+    $runner = new MigrationRunner();
+    $status = $runner->status();
+    
+    echo "Executed migrations: " . $status['total_executed'] . "\n";
+    if (!empty($status['executed'])) {
+      foreach ($status['executed'] as $migration) {
+        echo "  [X] " . $migration['file'] . "\n";
+      }
+    }
+    
+    echo "\nPending migrations: " . $status['total_pending'] . "\n";
+    if (!empty($status['pending'])) {
+      foreach ($status['pending'] as $migration) {
+        echo "  [ ] " . $migration['file'] . "\n";
+      }
+    } else {
+      echo "  No pending migrations.\n";
+    }
+    
+  } catch (\Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+    exit(1);
+  }
+}
+
+function cli_run_db_rollback($args) {
+  $steps = 1;
+  
+  // Parse steps parameter
+  foreach ($args as $arg) {
+    if (strpos($arg, 'steps=') === 0) {
+      $steps = (int) substr($arg, 6);
+      if ($steps < 1) {
+        echo "Error: steps must be at least 1\n";
+        exit(1);
+      }
+    }
+  }
+  
+  echo "Rolling back $steps migration(s)...\n";
+  
+  try {
+    $runner = new MigrationRunner();
+    $rolledBack = $runner->rollback($steps);
+    
+    if (empty($rolledBack)) {
+      echo "No migrations to rollback.\n";
+    } else {
+      echo "Successfully rolled back " . count($rolledBack) . " migration(s):\n";
+      foreach ($rolledBack as $file) {
+        echo "  - " . basename($file) . "\n";
+      }
+    }
+  } catch (\Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+    exit(1);
+  }
+}
+
+function cli_run_db_reset() {
+  echo "Rolling back all migrations...\n";
+  
+  try {
+    $runner = new MigrationRunner();
+    $rolledBack = $runner->reset();
+    
+    if (empty($rolledBack)) {
+      echo "No migrations to rollback.\n";
+    } else {
+      echo "Successfully rolled back all " . count($rolledBack) . " migration(s).\n";
+    }
+  } catch (\Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+    exit(1);
+  }
+}
+/* ./Migration runner functions */
+
 function cli_run_test($args) {
   // Remove the first two arguments: script name and 'test'
   $test_args = array_slice($args, 2);
@@ -401,9 +538,20 @@ if(count($argv) == 1) { // no arguments
       echo "Option missing\n";
       echo "Try: php icebox -h <command-name>\n";
     }
+  } else if($argv[1] == 'db:migrate') {
+    cli_run_db_migrate();
+  } else if($argv[1] == 'db:migrate:status') {
+    cli_run_db_status();
+  } else if($argv[1] == 'db:rollback') {
+    cli_run_db_rollback($argv);
+  } else if($argv[1] == 'db:reset') {
+    cli_run_db_reset();
   } else if($argv[1] == 'test') {
     cli_run_test($argv);
   } else if($argv[1] == 'console' || $argv[1] == 'c') {
     cli_run_console($argv);
+  } else {
+    echo "Unknown command: {$argv[1]}\n";
+    echo "Try: php icebox -h\n";
   }
 }

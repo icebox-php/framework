@@ -3,7 +3,9 @@
 namespace Icebox\Tests\Generator;
 
 use Icebox\Tests\TestCase;
+use Icebox\Tests\TestHelper;
 use Icebox\Generator\MigrationGenerator;
+use Icebox\ActiveRecord\MigrationRunner;
 
 /**
  * Test migration generator functionality
@@ -16,6 +18,9 @@ class MigrationGeneratorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        
+        // Initialize test database
+        TestHelper::initializeTestDatabase();
         
         // Set up test migrations directory
         $this->testRootDir = __DIR__ . '/../../tests';
@@ -293,6 +298,146 @@ class MigrationGeneratorTest extends TestCase
         $this->assertStringContainsString($downSql, $content);
         $this->assertStringContainsString('public function up()', $content);
         $this->assertStringContainsString('public function down()', $content);
+    }
+
+    /**
+     * Test migration runner - create schema_migrations table
+     */
+    public function testMigrationRunnerSchemaTable(): void
+    {
+        $runner = new MigrationRunner($this->migrationsDir);
+        $result = $runner->createSchemaMigrationsTable();
+        
+        $this->assertTrue($result, 'Should create schema_migrations table');
+        
+        // Verify table exists by checking status
+        $status = $runner->status();
+        $this->assertIsArray($status);
+        $this->assertArrayHasKey('executed', $status);
+        $this->assertArrayHasKey('pending', $status);
+    }
+
+    /**
+     * Test migration runner - full lifecycle
+     */
+    public function testMigrationRunnerLifecycle(): void
+    {
+        // Create a migration file
+        $migrationName = 'test_create_users_table';
+        $upSql = 'CREATE TABLE test_users (id INTEGER PRIMARY KEY, name VARCHAR(255))';
+        $downSql = 'DROP TABLE test_users';
+        
+        $filePath = MigrationGenerator::createMigrationFile($migrationName, $upSql, $downSql, $this->migrationsDir);
+        $this->assertFileExists($filePath);
+        
+        // Initialize migration runner
+        $runner = new MigrationRunner($this->migrationsDir);
+        
+        // Check status before migration
+        $statusBefore = $runner->status();
+        $this->assertEquals(1, $statusBefore['total_pending'], 'Should have 1 pending migration');
+        
+        // Run migration
+        $migrated = $runner->migrate();
+        $this->assertCount(1, $migrated, 'Should migrate 1 file');
+        
+        // Check status after migration
+        $statusAfter = $runner->status();
+        $this->assertEquals(1, $statusAfter['total_executed'], 'Should have 1 executed migration');
+        $this->assertEquals(0, $statusAfter['total_pending'], 'Should have 0 pending migrations');
+        
+        // Rollback migration
+        $rolledBack = $runner->rollback();
+        $this->assertCount(1, $rolledBack, 'Should rollback 1 migration');
+        
+        // Check status after rollback
+        $statusFinal = $runner->status();
+        $this->assertEquals(0, $statusFinal['total_executed'], 'Should have 0 executed migrations after rollback');
+        $this->assertEquals(1, $statusFinal['total_pending'], 'Should have 1 pending migration after rollback');
+    }
+
+    /**
+     * Test migration runner - rollback with steps
+     */
+    public function testMigrationRunnerRollbackWithSteps(): void
+    {
+        // Create multiple migration files
+        $migrations = [
+            ['name' => 'test_create_table1', 'up' => 'CREATE TABLE table1 (id INTEGER PRIMARY KEY)', 'down' => 'DROP TABLE table1'],
+            ['name' => 'test_create_table2', 'up' => 'CREATE TABLE table2 (id INTEGER PRIMARY KEY)', 'down' => 'DROP TABLE table2'],
+            ['name' => 'test_create_table3', 'up' => 'CREATE TABLE table3 (id INTEGER PRIMARY KEY)', 'down' => 'DROP TABLE table3'],
+        ];
+        
+        foreach ($migrations as $migration) {
+            MigrationGenerator::createMigrationFile($migration['name'], $migration['up'], $migration['down'], $this->migrationsDir);
+        }
+        
+        $runner = new MigrationRunner($this->migrationsDir);
+        
+        // Run all migrations
+        $migrated = $runner->migrate();
+        $this->assertCount(3, $migrated, 'Should migrate 3 files');
+        
+        // Rollback 2 migrations
+        $rolledBack = $runner->rollback(2);
+        $this->assertCount(2, $rolledBack, 'Should rollback 2 migrations');
+        
+        // Check status
+        $status = $runner->status();
+        $this->assertEquals(1, $status['total_executed'], 'Should have 1 executed migration after rolling back 2');
+        $this->assertEquals(2, $status['total_pending'], 'Should have 2 pending migrations after rolling back 2');
+    }
+
+    /**
+     * Test migration runner - reset all migrations
+     */
+    public function testMigrationRunnerReset(): void
+    {
+        // Create multiple migration files
+        $migrations = [
+            ['name' => 'test_reset_table1', 'up' => 'CREATE TABLE reset1 (id INTEGER PRIMARY KEY)', 'down' => 'DROP TABLE reset1'],
+            ['name' => 'test_reset_table2', 'up' => 'CREATE TABLE reset2 (id INTEGER PRIMARY KEY)', 'down' => 'DROP TABLE reset2'],
+        ];
+        
+        foreach ($migrations as $migration) {
+            MigrationGenerator::createMigrationFile($migration['name'], $migration['up'], $migration['down'], $this->migrationsDir);
+        }
+        
+        $runner = new MigrationRunner($this->migrationsDir);
+        
+        // Run all migrations
+        $migrated = $runner->migrate();
+        $this->assertCount(2, $migrated);
+        
+        // Reset all migrations
+        $reset = $runner->reset();
+        $this->assertCount(2, $reset, 'Should reset 2 migrations');
+        
+        // Check status
+        $status = $runner->status();
+        $this->assertEquals(0, $status['total_executed'], 'Should have 0 executed migrations after reset');
+        $this->assertEquals(2, $status['total_pending'], 'Should have 2 pending migrations after reset');
+    }
+
+    /**
+     * Test migration runner - validation of migration methods
+     */
+    public function testMigrationRunnerValidation(): void
+    {
+        // Create a migration file without up/down methods
+        $migrationName = 'test_invalid_migration';
+        // Class name must match what MigrationRunner expects: Migration + timestamp + migration name
+        $content = '<?php class Migration20251216000000_Test_Invalid_Migration { }';
+        $filePath = $this->migrationsDir . '/20251216000000_' . $migrationName . '.php';
+        file_put_contents($filePath, $content);
+        
+        $runner = new MigrationRunner($this->migrationsDir);
+        
+        // Try to migrate - should fail with validation error
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('must have both up() and down() methods');
+        
+        $runner->migrate();
     }
 
     /**
