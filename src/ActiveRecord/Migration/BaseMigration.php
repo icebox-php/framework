@@ -18,9 +18,7 @@ abstract class BaseMigration
      */
     protected function createTable(string $tableName, callable $callback): void
     {
-        $tableDef = new TableDefinition($tableName);
-        $callback($tableDef);
-        $sql = $tableDef->toSql();
+        $sql = SqlGenerator::generateCreateTableSql($tableName, $callback);
         Connection::query($sql);
     }
 
@@ -32,7 +30,7 @@ abstract class BaseMigration
      */
     protected function dropTable(string $tableName): void
     {
-        $sql = "DROP TABLE {$tableName}";
+        $sql = SqlGenerator::generateDropTableSql($tableName);
         Connection::query($sql);
     }
 
@@ -48,7 +46,7 @@ abstract class BaseMigration
     protected function addColumn(string $tableName, string $columnName, string $type, array $options = []): void
     {
         $columnDef = new ColumnDefinition($columnName, $type, $options);
-        $sql = "ALTER TABLE {$tableName} ADD COLUMN " . $columnDef->toSql();
+        $sql = SqlGenerator::generateAlterTableAddColumnSql($tableName, $columnDef);
         Connection::query($sql);
     }
 
@@ -61,7 +59,7 @@ abstract class BaseMigration
      */
     protected function removeColumn(string $tableName, string $columnName): void
     {
-        $sql = "ALTER TABLE {$tableName} DROP COLUMN {$columnName}";
+        $sql = SqlGenerator::generateAlterTableDropColumnSql($tableName, $columnName);
         Connection::query($sql);
     }
 
@@ -77,7 +75,7 @@ abstract class BaseMigration
     {
         // This is database-specific, for now we'll use a generic approach
         // In a real implementation, you'd detect the database type
-        $sql = "ALTER TABLE {$tableName} RENAME COLUMN {$oldName} TO {$newName}";
+        $sql = SqlGenerator::generateRenameColumnSql($tableName, $oldName, $newName);
         Connection::query($sql);
     }
 
@@ -91,11 +89,7 @@ abstract class BaseMigration
      */
     protected function addIndex(string $tableName, $columns, array $options = []): void
     {
-        $indexName = $options['name'] ?? $this->generateIndexName($tableName, $columns);
-        $columnsStr = is_array($columns) ? implode(', ', $columns) : $columns;
-        $unique = isset($options['unique']) && $options['unique'] ? 'UNIQUE ' : '';
-
-        $sql = "CREATE {$unique}INDEX {$indexName} ON {$tableName} ({$columnsStr})";
+        $sql = SqlGenerator::generateCreateIndexSql($tableName, $columns, $options);
         Connection::query($sql);
     }
 
@@ -109,22 +103,8 @@ abstract class BaseMigration
      */
     protected function removeIndex(string $tableName, $columns, array $options = []): void
     {
-        $indexName = $options['name'] ?? $this->generateIndexName($tableName, $columns);
-        $sql = "DROP INDEX {$indexName}";
+        $sql = SqlGenerator::generateDropIndexSql($tableName, $columns, $options);
         Connection::query($sql);
-    }
-
-    /**
-     * Generate index name
-     *
-     * @param string $tableName
-     * @param string|array $columns
-     * @return string
-     */
-    private function generateIndexName(string $tableName, $columns): string
-    {
-        $columnsStr = is_array($columns) ? implode('_', $columns) : $columns;
-        return "index_{$tableName}_on_{$columnsStr}";
     }
 
     /**

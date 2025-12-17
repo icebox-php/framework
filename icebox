@@ -1,5 +1,16 @@
 <?php
 
+// if undefined, set $_ENV['APP_ENV'] 
+if(count($argv) == 2 && $argv[1] == 'test') {
+    $_ENV['APP_ENV'] = 'test';
+}
+$_ENV['APP_ENV'] = $_ENV['APP_ENV'] ?? 'development';
+
+// echo "$ _ENV['APP_ENV'] -- " . $_ENV['APP_ENV'] . "\n";
+// echo "-----------\n\n";
+
+echo "Loading " . $_ENV['APP_ENV'] . " environment (PHP " . PHP_VERSION . ")\n";
+
 // Load Composer autoloader
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -339,9 +350,6 @@ function cli_run_generate_migration($migration_name, $args) {
   
   // Get columns from command arguments
   $columns = array_slice($args, 4);
-  
-  // Generate SQL using MigrationGenerator
-  // list($up_sql, $down_sql) = MigrationGenerator::generateSql($migration_name, $columns);
 
   // Create migration file
   $migrations_dir = ROOT_DIR . '/db/migrations';
@@ -496,7 +504,7 @@ function cli_run_console($args) {
   }
   
   // Show message and load PsySH directly
-  echo "Loading development environment (PHP " . PHP_VERSION . ")\n";
+  // echo "Loading development environment (PHP " . PHP_VERSION . ")\n";
   echo "Type 'exit' to quit, 'help' for help.\n\n";
   
   // Run PsySH directly without bootstrap config

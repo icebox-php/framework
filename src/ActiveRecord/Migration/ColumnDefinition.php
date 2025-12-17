@@ -116,7 +116,7 @@ class ColumnDefinition
      */
     public function toSql(): string
     {
-        $sqlType = $this->mapTypeToSql();
+        $sqlType = SqlGenerator::mapColumnTypeToSql($this->type, $this->options);
 
         $parts = [$this->name, $sqlType];
 
@@ -147,41 +147,5 @@ class ColumnDefinition
         }
 
         return implode(' ', $parts);
-    }
-
-    /**
-     * Map PHP type to SQL type
-     *
-     * @return string
-     */
-    private function mapTypeToSql(): string
-    {
-        $typeMap = [
-            'string' => 'VARCHAR',
-            'text' => 'TEXT',
-            'integer' => 'INT',
-            'bigint' => 'BIGINT',
-            'float' => 'FLOAT',
-            'decimal' => 'DECIMAL',
-            'boolean' => 'BOOLEAN',
-            'date' => 'DATE',
-            'datetime' => 'DATETIME',
-            'timestamp' => 'TIMESTAMP',
-            'time' => 'TIME',
-            'binary' => 'BLOB',
-        ];
-
-        $sqlType = isset($typeMap[$this->type]) ? $typeMap[$this->type] : 'VARCHAR(255)';
-
-        // Add length/precision/scale specifications
-        if ($this->type === 'string' && isset($this->options['limit'])) {
-            $sqlType .= "({$this->options['limit']})";
-        } elseif ($this->type === 'decimal') {
-            $precision = $this->options['precision'] ?? 10;
-            $scale = $this->options['scale'] ?? 2;
-            $sqlType .= "({$precision},{$scale})";
-        }
-
-        return $sqlType;
     }
 }

@@ -157,54 +157,8 @@ class MigrationGeneratorTest extends TestCase
         }
     }
 
-    /**
-     * Test SQL generation for create table migrations
-     */
-    public function testCreateTableSqlGeneration(): void
-    {
-        $migrationName = 'create_posts_table';
-        $columns = ['title:string', 'content:text', 'user_id:integer'];
-        
-        list($upSql, $downSql) = MigrationGenerator::generateSql($migrationName, $columns);
-        
-        // Check up SQL
-        $this->assertStringContainsString('CREATE TABLE posts', $upSql);
-        $this->assertStringContainsString('id INT AUTO_INCREMENT PRIMARY KEY', $upSql);
-        $this->assertStringContainsString('title VARCHAR(255)', $upSql);
-        $this->assertStringContainsString('content TEXT', $upSql);
-        $this->assertStringContainsString('user_id INT', $upSql);
-        
-        // Check down SQL
-        $this->assertEquals('DROP TABLE posts', $downSql);
-    }
 
-    /**
-     * Test SQL generation for add column migrations
-     */
-    public function testAddColumnSqlGeneration(): void
-    {
-        $migrationName = 'add_user_id_to_posts';
-        $columns = ['user_id:integer'];
-        
-        list($upSql, $downSql) = MigrationGenerator::generateSql($migrationName, $columns);
-        
-        $this->assertStringContainsString('ALTER TABLE posts ADD COLUMN user_id INT', $upSql);
-        $this->assertStringContainsString('ALTER TABLE posts DROP COLUMN user_id', $downSql);
-    }
 
-    /**
-     * Test SQL generation for remove column migrations
-     */
-    public function testRemoveColumnSqlGeneration(): void
-    {
-        $migrationName = 'remove_title_from_posts';
-        $columns = ['title:string'];
-        
-        list($upSql, $downSql) = MigrationGenerator::generateSql($migrationName, $columns);
-        
-        $this->assertStringContainsString('ALTER TABLE posts DROP COLUMN title', $upSql);
-        $this->assertStringContainsString('ALTER TABLE posts ADD COLUMN title VARCHAR(255)', $downSql);
-    }
 
     /**
      * Test migration file creation (SQL-based)
@@ -278,7 +232,7 @@ class MigrationGeneratorTest extends TestCase
      */
     public function testDslMigrationFileCreation(): void
     {
-        $migrationName = 'create_products_table';
+        $migrationName = 'create_items_table';
         $columns = ['name:string', 'price:decimal'];
 
         // Create DSL migration file using unified API (smart detection)
@@ -292,10 +246,10 @@ class MigrationGeneratorTest extends TestCase
         $this->assertStringContainsString('<?php', $content);
         $this->assertStringContainsString('use Icebox\ActiveRecord\Migration\BaseMigration;', $content);
         $this->assertStringContainsString('extends BaseMigration', $content);
-        $this->assertStringContainsString('$this->createTable(\'products\', function($t) {', $content);
+        $this->assertStringContainsString('$this->createTable(\'items\', function($t) {', $content);
         $this->assertStringContainsString('$t->string(\'name\');', $content);
         $this->assertStringContainsString('$t->decimal(\'price\');', $content);
-        $this->assertStringContainsString('$this->dropTable(\'products\');', $content);
+        $this->assertStringContainsString('$this->dropTable(\'items\');', $content);
 
         // Check class name format
         $this->assertStringContainsString('class Migration', $content);
@@ -315,32 +269,6 @@ class MigrationGeneratorTest extends TestCase
         $this->assertInstanceOf('Icebox\ActiveRecord\Migration\BaseMigration', $migration, 'Migration should extend base Migration class');
     }
 
-    /**
-     * Test complete migration generation flow
-     */
-    public function testCompleteMigrationGeneration(): void
-    {
-        $migrationName = 'create_products_table';
-        $columns = ['name:string', 'price:decimal', 'in_stock:boolean'];
-        
-        // Generate SQL
-        list($upSql, $downSql) = MigrationGenerator::generateSql($migrationName, $columns);
-        
-        // Create migration file
-        $filePath = MigrationGenerator::createMigrationFile($migrationName, $upSql, $downSql, self::$migrationsDir);
-        
-        // Check that file was created
-        $this->assertFileExists($filePath, 'Migration file should be created');
-        
-        $content = file_get_contents($filePath);
-        
-        // Verify SQL content
-        $this->assertStringContainsString('CREATE TABLE products', $content);
-        $this->assertStringContainsString('name VARCHAR(255)', $content);
-        $this->assertStringContainsString('price DECIMAL(10,2)', $content);
-        $this->assertStringContainsString('in_stock BOOLEAN', $content);
-        $this->assertStringContainsString('DROP TABLE products', $content);
-    }
 
     /**
      * Test HTML input type mapping

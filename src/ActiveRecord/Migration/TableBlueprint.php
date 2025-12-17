@@ -3,12 +3,11 @@
 namespace Icebox\ActiveRecord\Migration;
 
 /**
- * TableDefinition - Handles column definitions for table creation/alteration
+ * TableBlueprint - Handles column definitions for table creation/alteration
  */
-class TableDefinition
+class TableBlueprint
 {
     private $tableName;
-    private $isCreate;
     private $columns = [];
     private $indexes = [];
 
@@ -16,12 +15,10 @@ class TableDefinition
      * Constructor
      *
      * @param string $tableName
-     * @param bool $isCreate Whether this is for CREATE TABLE or ALTER TABLE
      */
-    public function __construct(string $tableName, bool $isCreate = true)
+    public function __construct(string $tableName)
     {
         $this->tableName = $tableName;
-        $this->isCreate = $isCreate;
     }
 
     /**
@@ -203,56 +200,12 @@ class TableDefinition
     }
 
     /**
-     * Convert to SQL
+     * Get columns
      *
-     * @return string
+     * @return array
      */
-    public function toSql(): string
+    public function getColumns(): array
     {
-        if ($this->isCreate) {
-            return $this->toCreateSql();
-        } else {
-            return $this->toAlterSql();
-        }
-    }
-
-    /**
-     * Generate CREATE TABLE SQL
-     *
-     * @return string
-     */
-    private function toCreateSql(): string
-    {
-        $sql = "CREATE TABLE {$this->tableName} (\n";
-        $sql .= "  id INT AUTO_INCREMENT PRIMARY KEY";
-
-        $columnSqls = [];
-        foreach ($this->columns as $column) {
-            $columnSqls[] = '  ' . $column->toSql();
-        }
-
-        if (!empty($columnSqls)) {
-            $sql .= ",\n" . implode(",\n", $columnSqls);
-        }
-
-        $sql .= "\n)";
-
-        return $sql;
-    }
-
-    /**
-     * Generate ALTER TABLE SQL
-     *
-     * @return string
-     */
-    private function toAlterSql(): string
-    {
-        $sqls = [];
-
-        foreach ($this->columns as $column) {
-            $sqls[] = "ALTER TABLE {$this->tableName} ADD COLUMN " . $column->toSql();
-        }
-
-        return implode('; ', $sqls);
+        return $this->columns;
     }
 }

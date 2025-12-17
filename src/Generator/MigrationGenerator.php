@@ -59,22 +59,19 @@ class MigrationGenerator
      */
     public static function mapColumnTypeToSql(string $phpType): string
     {
-        $typeMap = [
-            'string' => 'VARCHAR(255)',
-            'text' => 'TEXT',
-            'integer' => 'INT',
-            'bigint' => 'BIGINT',
-            'float' => 'FLOAT',
-            'decimal' => 'DECIMAL(10,2)',
-            'boolean' => 'BOOLEAN',
-            'date' => 'DATE',
-            'datetime' => 'DATETIME',
-            'timestamp' => 'TIMESTAMP',
-            'time' => 'TIME',
-            'binary' => 'BLOB',
-        ];
+        // Use SqlGenerator for consistent SQL type mapping
+        // Note: This is a simplified wrapper for backward compatibility
+        // MigrationGenerator uses this for display/validation, not actual SQL execution
+        $options = [];
         
-        return isset($typeMap[$phpType]) ? $typeMap[$phpType] : $typeMap['string'];
+        // Set default options to match previous behavior
+        if ($phpType === 'decimal') {
+            $options = ['precision' => 10, 'scale' => 2];
+        } elseif ($phpType === 'string') {
+            $options = ['limit' => 255];
+        }
+        
+        return \Icebox\ActiveRecord\Migration\SqlGenerator::mapColumnTypeToSql($phpType, $options);
     }
 
     // /**
@@ -153,14 +150,14 @@ class MigrationGenerator
      */
     private static function generateCreateTableDsl(string $tableName, array $columnDefs): string
     {
-        $code = "\$this->createTable('{$tableName}', function(\$t) {\n";
+        $code = "        \$this->createTable('{$tableName}', function(\$t) {\n";
 
         foreach ($columnDefs as $columnName => $columnType) {
             $methodCall = self::generateColumnMethodCall($columnName, $columnType);
-            $code .= "    {$methodCall};\n";
+            $code .= "            {$methodCall};\n";
         }
 
-        $code .= "});";
+        $code .= "        });";
         return $code;
     }
 
@@ -172,7 +169,7 @@ class MigrationGenerator
      */
     private static function generateDropTableDsl(string $tableName): string
     {
-        return "\$this->dropTable('{$tableName}');";
+        return "        \$this->dropTable('{$tableName}');";
     }
 
     /**
@@ -238,71 +235,6 @@ class MigrationGenerator
         return "\$t->{$method}('{$columnName}')";
     }
 
-    /**
-     * Generate SQL from migration name and columns (backward compatibility)
-     *
-     * @param string $migrationName
-     * @param array $columns Array of column definitions
-     * @return array [upSql, downSql]
-     */
-    public static function generateSql(string $migrationName, array $columns): array
-    {
-        $tableName = self::extractTableName($migrationName);
-        $columnDefs = self::parseColumnAttributes($columns);
-
-        // Determine migration type
-        if (strpos($migrationName, 'create') === 0) {
-            // Create table migration
-            $sql = "CREATE TABLE {$tableName} (\n";
-            $sql .= "  id INT AUTO_INCREMENT PRIMARY KEY";
-
-            $columnSql = [];
-            foreach ($columnDefs as $columnName => $columnType) {
-                $sqlType = self::mapColumnTypeToSql($columnType);
-                $columnSql[] = "  {$columnName} {$sqlType}";
-            }
-
-            if (!empty($columnSql)) {
-                $sql .= ",\n" . implode(",\n", $columnSql);
-            }
-
-            $sql .= "\n)";
-
-            $upSql = $sql;
-            $downSql = "DROP TABLE {$tableName}";
-
-        } elseif (strpos($migrationName, 'add') === 0) {
-            // Add column migration
-            $upSql = "ALTER TABLE {$tableName} ADD COLUMN ";
-            $downSql = "ALTER TABLE {$tableName} DROP COLUMN ";
-
-            foreach ($columnDefs as $columnName => $columnType) {
-                $sqlType = self::mapColumnTypeToSql($columnType);
-                $upSql .= "{$columnName} {$sqlType}";
-                $downSql .= "{$columnName}";
-                break; // Only handle first column for add/remove migrations
-            }
-
-        } elseif (strpos($migrationName, 'remove') === 0) {
-            // Remove column migration (reverse of add)
-            $upSql = "ALTER TABLE {$tableName} DROP COLUMN ";
-            $downSql = "ALTER TABLE {$tableName} ADD COLUMN ";
-
-            foreach ($columnDefs as $columnName => $columnType) {
-                $sqlType = self::mapColumnTypeToSql($columnType);
-                $upSql .= "{$columnName}";
-                $downSql .= "{$columnName} {$sqlType}";
-                break; // Only handle first column for add/remove migrations
-            }
-
-        } else {
-            // Default: empty migration
-            $upSql = "-- Migration: {$migrationName}";
-            $downSql = "-- Rollback: {$migrationName}";
-        }
-
-        return [$upSql, $downSql];
-    }
 
     /**
      * Generate migration class name from migration name
