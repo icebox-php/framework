@@ -20,7 +20,17 @@ class SqlGenerator
         $callback($blueprint);
         
         $sql = "CREATE TABLE {$tableName} (\n";
-        $sql .= "  id INT AUTO_INCREMENT PRIMARY KEY";
+        
+        // Get database driver to generate appropriate SQL
+        $driver = self::getDatabaseDriver();
+        
+        if ($driver === 'sqlite') {
+            // SQLite syntax: INTEGER PRIMARY KEY AUTOINCREMENT
+            $sql .= "  id INTEGER PRIMARY KEY AUTOINCREMENT";
+        } else {
+            // MySQL/PostgreSQL syntax: INT AUTO_INCREMENT PRIMARY KEY
+            $sql .= "  id INT AUTO_INCREMENT PRIMARY KEY";
+        }
 
         $columnSqls = [];
         foreach ($blueprint->getColumns() as $column) {
@@ -167,5 +177,24 @@ class SqlGenerator
     {
         $columnsStr = is_array($columns) ? implode('_', $columns) : $columns;
         return "index_{$tableName}_on_{$columnsStr}";
+    }
+
+    /**
+     * Get the database driver from configuration
+     *
+     * @return string Database driver (sqlite, mysql, pgsql, etc.)
+     */
+    private static function getDatabaseDriver(): string
+    {
+        // Try to get driver from Config
+        if (class_exists('Icebox\ActiveRecord\Config')) {
+            $driver = \Icebox\ActiveRecord\Config::get('driver');
+            if ($driver) {
+                return $driver;
+            }
+        }
+        
+        // Default to sqlite for backward compatibility
+        return 'sqlite';
     }
 }

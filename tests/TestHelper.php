@@ -123,4 +123,103 @@ class TestHelper
         $pdo->exec("DELETE FROM users");
         $pdo->exec("DELETE FROM posts");
     }
+
+    /**
+     * Assert that a table exists in the database
+     */
+    public static function assertTableExists(string $tableName): void
+    {
+        $pdo = Config::getConnection();
+        $stmt = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='{$tableName}'");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->closeCursor();
+        
+        if (empty($result)) {
+            throw new \PHPUnit\Framework\AssertionFailedError("Table '{$tableName}' does not exist in the database");
+        }
+    }
+
+    /**
+     * Assert that a table does not exist in the database
+     */
+    public static function assertTableDoesNotExist(string $tableName): void
+    {
+        $pdo = Config::getConnection();
+        $stmt = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='{$tableName}'");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->closeCursor();
+        
+        if (!empty($result)) {
+            throw new \PHPUnit\Framework\AssertionFailedError("Table '{$tableName}' exists in the database, but should not");
+        }
+    }
+
+    /**
+     * Assert that a column exists in a table
+     *
+     * @param string $tableName The table name
+     * @param string $columnName The column name
+     * @param string|null $expectedType Optional expected column type (SQLite type names are flexible)
+     */
+    public static function assertColumnExists(string $tableName, string $columnName, ?string $expectedType = null): void
+    {
+        $pdo = Config::getConnection();
+        $stmt = $pdo->query("PRAGMA table_info('{$tableName}')");
+        $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->closeCursor();
+        
+        $found = false;
+        $actualType = null;
+        
+        foreach ($columns as $column) {
+            if ($column['name'] === $columnName) {
+                $found = true;
+                $actualType = $column['type'];
+                break;
+            }
+        }
+        
+        if (!$found) {
+            throw new \PHPUnit\Framework\AssertionFailedError("Column '{$columnName}' does not exist in table '{$tableName}'");
+        }
+        
+        if ($expectedType !== null && $actualType !== null) {
+            // SQLite types are flexible, so we do a case-insensitive contains check
+            $expectedTypeLower = strtolower($expectedType);
+            $actualTypeLower = strtolower($actualType);
+            
+            // Check if expected type is contained in actual type (e.g., 'int' in 'INTEGER')
+            if (strpos($actualTypeLower, $expectedTypeLower) === false) {
+                throw new \PHPUnit\Framework\AssertionFailedError(
+                    "Column '{$columnName}' in table '{$tableName}' should have type containing '{$expectedType}', got '{$actualType}'"
+                );
+            }
+        }
+    }
+
+    /**
+     * Get column information for a table
+     */
+    public static function getTableInfo(string $tableName): array
+    {
+        $pdo = Config::getConnection();
+        $stmt = $pdo->query("PRAGMA table_info('{$tableName}')");
+        $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->closeCursor();
+        
+        return $columns;
+    }
+
+    /**
+     * Get list of all tables in the database
+     */
+    public static function getAllTables(): array
+    {
+        $pdo = Config::getConnection();
+        $stmt = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
+        $tables = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+        $stmt->closeCursor();
+        
+        return $tables;
+    }
 }
