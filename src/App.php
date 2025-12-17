@@ -214,7 +214,7 @@ class App {
 
     private static function set_root_url($project_directory) {
       $url = $_SERVER['HTTP_HOST'];
-      if( $_SERVER['SERVER_PORT'] != 80) { $url .= ':' . $_SERVER['SERVER_PORT']; }
+      // if( $_SERVER['SERVER_PORT'] != 80) { $url .= ':' . $_SERVER['SERVER_PORT']; }
 
       // $app_directory = str_replace($_SERVER['DOCUMENT_ROOT'], '', $dir);
       // self::$root_url = $url . $app_directory;
