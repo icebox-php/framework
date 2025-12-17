@@ -676,7 +676,7 @@ class MigrationGeneratorTest extends TestCase
     public function testAddColumnMigrationWithDatabaseVerification(): void
     {
         // Clean up any existing migration files first
-        $this->cleanupMigrationFiles();
+        // $this->cleanupMigrationFiles();
         
         // Create a simple table first using direct SQL (not via migration)
         // This ensures we have a table to add columns to
