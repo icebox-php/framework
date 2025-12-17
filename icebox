@@ -1,23 +1,25 @@
 <?php
 
-// if undefined, set $_ENV['APP_ENV'] 
-if(count($argv) == 2 && $argv[1] == 'test') {
-    $_ENV['APP_ENV'] = 'test';
+require_once __DIR__ . '/src/env.php';
+
+// Set APP_ENV if not already set
+if(env('APP_ENV') === null) {
+    if (isset($argv[1]) && $argv[1] === 'test') {
+        $_ENV['APP_ENV'] = 'test';
+    } else {
+        $_ENV['APP_ENV'] = 'development';
+    }
 }
-$_ENV['APP_ENV'] = $_ENV['APP_ENV'] ?? 'development';
 
-// echo "$ _ENV['APP_ENV'] -- " . $_ENV['APP_ENV'] . "\n";
-// echo "-----------\n\n";
-
-echo "Loading " . $_ENV['APP_ENV'] . " environment (PHP " . PHP_VERSION . ")\n";
+echo "# Loading " . env('APP_ENV') . " environment (PHP " . PHP_VERSION . ")\n";
 
 // Load Composer autoloader
 require_once __DIR__ . '/vendor/autoload.php';
 
-// Define APP_ROOT_DIR if not already defined
+// Define ROOT_DIR if not already defined (should be defined by config/boot.php)
 if (!defined('ROOT_DIR')) {
-  // print("- warning: ROOT_DIR constant must be defined\n  setting this value as ROOT_DIR : " . getcwd() . "\n");
-  define('ROOT_DIR', getcwd());
+    // print("- warning: ROOT_DIR constant must be defined\n  setting this value as ROOT_DIR : " . getcwd() . "\n");
+    define('ROOT_DIR', getcwd());
 }
 
 use Icebox\ActiveRecord\lib\Utils;
@@ -473,7 +475,7 @@ function cli_run_test($args) {
   $test_args = array_slice($args, 2);
   
   // Build PHPUnit command
-  $phpunit = 'vendor/bin/phpunit';
+  $phpunit = __DIR__ . '/vendor/bin/phpunit';
   if (!file_exists($phpunit)) {
     echo "Error: PHPUnit not found at $phpunit. Run 'composer install' first.\n";
     exit(1);
