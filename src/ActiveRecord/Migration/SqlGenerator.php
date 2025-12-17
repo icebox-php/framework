@@ -43,7 +43,7 @@ class SqlGenerator
      * @param ColumnDefinition $column
      * @return string
      */
-    public static function generateAlterTableAddColumnSql(string $tableName, ColumnDefinition $column): string
+    public static function generateAddColumnSql(string $tableName, ColumnDefinition $column): string
     {
         return "ALTER TABLE {$tableName} ADD COLUMN " . $column->toSql();
     }
@@ -55,7 +55,7 @@ class SqlGenerator
      * @param string $columnName
      * @return string
      */
-    public static function generateAlterTableDropColumnSql(string $tableName, string $columnName): string
+    public static function generateDropColumnSql(string $tableName, string $columnName): string
     {
         return "ALTER TABLE {$tableName} DROP COLUMN {$columnName}";
     }

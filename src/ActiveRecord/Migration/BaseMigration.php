@@ -46,7 +46,7 @@ abstract class BaseMigration
     protected function addColumn(string $tableName, string $columnName, string $type, array $options = []): void
     {
         $columnDef = new ColumnDefinition($columnName, $type, $options);
-        $sql = SqlGenerator::generateAlterTableAddColumnSql($tableName, $columnDef);
+        $sql = SqlGenerator::generateAddColumnSql($tableName, $columnDef);
         Connection::query($sql);
     }
 
@@ -59,7 +59,7 @@ abstract class BaseMigration
      */
     protected function removeColumn(string $tableName, string $columnName): void
     {
-        $sql = SqlGenerator::generateAlterTableDropColumnSql($tableName, $columnName);
+        $sql = SqlGenerator::generateDropColumnSql($tableName, $columnName);
         Connection::query($sql);
     }
 

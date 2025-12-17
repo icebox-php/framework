@@ -184,10 +184,10 @@ class MigrationGenerator
         $code = "";
         foreach ($columnDefs as $columnName => $columnType) {
             $methodCall = self::generateColumnMethodCall($columnName, $columnType);
-            $code .= "\$this->addColumn('{$tableName}', '{$columnName}', '{$columnType}');\n";
+            $code .= "        \$this->addColumn('{$tableName}', '{$columnName}', '{$columnType}');";
             break; // Only handle first column for add/remove migrations
         }
-        return trim($code);
+        return $code;
     }
 
     /**
@@ -201,10 +201,10 @@ class MigrationGenerator
     {
         $code = "";
         foreach ($columnDefs as $columnName => $columnType) {
-            $code .= "\$this->removeColumn('{$tableName}', '{$columnName}');\n";
+            $code .= "        \$this->removeColumn('{$tableName}', '{$columnName}');";
             break; // Only handle first column for add/remove migrations
         }
-        return trim($code);
+        return $code;
     }
 
     /**

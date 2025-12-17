@@ -269,6 +269,94 @@ class MigrationGeneratorTest extends TestCase
         $this->assertInstanceOf('Icebox\ActiveRecord\Migration\BaseMigration', $migration, 'Migration should extend base Migration class');
     }
 
+    /**
+     * Test add column migration file creation
+     */
+    public function testAddColumnMigrationFileCreation(): void
+    {
+        $migrationName = 'add_price_to_items';
+        $columns = ['price:decimal'];
+
+        // Create DSL migration file using unified API (smart detection)
+        $filePath = MigrationGenerator::createMigrationFile($migrationName, $columns, self::$migrationsDir);
+
+        // Check that file was created
+        $this->assertFileExists($filePath, 'Add column migration file should be created');
+
+        // Check file content
+        $content = file_get_contents($filePath);
+        $this->assertStringContainsString('<?php', $content);
+        $this->assertStringContainsString('use Icebox\ActiveRecord\Migration\BaseMigration;', $content);
+        $this->assertStringContainsString('extends BaseMigration', $content);
+        
+        // Check for add column DSL in up() method (with proper indentation)
+        $this->assertStringContainsString('        $this->addColumn(\'items\', \'price\', \'decimal\');', $content);
+        
+        // Check for remove column DSL in down() method (rollback, with proper indentation)
+        $this->assertStringContainsString('        $this->removeColumn(\'items\', \'price\');', $content);
+
+        // Check class name format
+        $this->assertStringContainsString('class Migration', $content);
+
+        // Check that class can be loaded and instantiated
+        require_once $filePath;
+
+        // Extract class name from file
+        preg_match('/class\s+(\w+)/', $content, $matches);
+        $className = $matches[1];
+
+        $this->assertTrue(class_exists($className), "Class $className should exist");
+
+        $migration = new $className();
+        $this->assertTrue(method_exists($migration, 'up'), 'Migration should have up() method');
+        $this->assertTrue(method_exists($migration, 'down'), 'Migration should have down() method');
+        $this->assertInstanceOf('Icebox\ActiveRecord\Migration\BaseMigration', $migration, 'Migration should extend base Migration class');
+    }
+
+    /**
+     * Test remove column migration file creation
+     */
+    public function testRemoveColumnMigrationFileCreation(): void
+    {
+        $migrationName = 'remove_price_from_items';
+        $columns = ['price:decimal'];
+
+        // Create DSL migration file using unified API (smart detection)
+        $filePath = MigrationGenerator::createMigrationFile($migrationName, $columns, self::$migrationsDir);
+
+        // Check that file was created
+        $this->assertFileExists($filePath, 'Remove column migration file should be created');
+
+        // Check file content
+        $content = file_get_contents($filePath);
+        $this->assertStringContainsString('<?php', $content);
+        $this->assertStringContainsString('use Icebox\ActiveRecord\Migration\BaseMigration;', $content);
+        $this->assertStringContainsString('extends BaseMigration', $content);
+        
+        // Check for remove column DSL in up() method (with proper indentation)
+        $this->assertStringContainsString('        $this->removeColumn(\'items\', \'price\');', $content);
+        
+        // Check for add column DSL in down() method (rollback, with proper indentation)
+        $this->assertStringContainsString('        $this->addColumn(\'items\', \'price\', \'decimal\');', $content);
+
+        // Check class name format
+        $this->assertStringContainsString('class Migration', $content);
+
+        // Check that class can be loaded and instantiated
+        require_once $filePath;
+
+        // Extract class name from file
+        preg_match('/class\s+(\w+)/', $content, $matches);
+        $className = $matches[1];
+
+        $this->assertTrue(class_exists($className), "Class $className should exist");
+
+        $migration = new $className();
+        $this->assertTrue(method_exists($migration, 'up'), 'Migration should have up() method');
+        $this->assertTrue(method_exists($migration, 'down'), 'Migration should have down() method');
+        $this->assertInstanceOf('Icebox\ActiveRecord\Migration\BaseMigration', $migration, 'Migration should extend base Migration class');
+    }
+
 
     /**
      * Test HTML input type mapping
