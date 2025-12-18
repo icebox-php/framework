@@ -135,14 +135,20 @@ function cli_show_specific_help_console() {
 
 function cli_show_specific_help_server() {
   echo "Usage:\n";
-  echo "  php icebox server\n";
-  echo "  php icebox s\n\n";
+  echo "  php icebox server [options]\n";
+  echo "  php icebox s [options]\n\n";
   echo "Start PHP built-in web server with document root set to 'public' directory.\n";
   echo "The server runs on http://localhost:8000 by default.\n";
   echo "\n";
+  echo "Options:\n";
+  echo "  -p, --port=PORT      Set the port number (default: 8000)\n";
+  echo "  -h, --host=HOST      Set the host address (default: localhost)\n";
+  echo "\n";
   echo "Examples:\n";
-  echo "  php icebox server          # Start the web server\n";
+  echo "  php icebox server          # Start the web server with default settings\n";
   echo "  php icebox s               # Short alias\n";
+  echo "  php icebox server -p=8011 --host=localhost\n";
+  echo "  php icebox s --port=8011 -h=localhost\n";
   echo "\n";
   echo "Note: The server will look for a 'public' directory in the current working directory.\n";
   echo "If the directory doesn't exist, the server may not work correctly.\n";
@@ -538,25 +544,47 @@ function cli_run_console($args) {
 }
 
 function cli_run_server($args) {
+  $host = 'localhost';
+  $port = '8000';
+
+  // Parse command line arguments
+  foreach ($args as $key => $arg) {
+    if (strpos($arg, '-p=') === 0 || strpos($arg, '--port=') === 0) {
+      $port = substr($arg, strpos($arg, '=') + 1);
+      unset($args[$key]);
+    } elseif (strpos($arg, '-h=') === 0 || strpos($arg, '--host=') === 0) {
+      $host = substr($arg, strpos($arg, '=') + 1);
+      unset($args[$key]);
+    }
+  }
+
+  // Re-index the array after unsetting elements
+  $args = array_values($args);
+
   echo "Starting PHP built-in web server...\n";
   echo "Document root: public\n";
-  echo "URL: http://localhost:8000\n";
+  echo "URL: http://$host:$port\n";
   echo "Press Ctrl+C to stop the server\n\n";
 
+  $public_dir = ROOT_DIR . '/public';
+
   // Check if public directory exists
-  if (!is_dir('public')) {
+  if (!is_dir($public_dir)) {
     echo "Warning: 'public' directory not found in current working directory.\n";
     echo "The server may not work correctly.\n\n";
   }
 
   // Build the command
-  $command = "php -S localhost:8000 -t ".ROOT_DIR.'/public';
-  echo $command;
+  $command = "php -S $host:$port -t " . $public_dir;
 
   // Pass through any additional arguments (e.g., for router script)
-  if (isset($args[2])) {
-    $command .= ' ' . escapeshellarg($args[2]);
+  if (count($args) > 2) {
+    for ($i = 2; $i < count($args); $i++) {
+      $command .= ' ' . escapeshellarg($args[$i]);
+    }
   }
+
+  echo $command . "\n";
 
   passthru($command, $return_var);
   exit($return_var);
