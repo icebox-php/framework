@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/src/env.php';
 
-// Set APP_ENV if not already set
+# Set APP_ENV if not already set
 if(env('APP_ENV') === null) {
     if (isset($argv[1]) && $argv[1] === 'test') {
         $_ENV['APP_ENV'] = 'test';
@@ -13,10 +13,10 @@ if(env('APP_ENV') === null) {
 
 echo "# Loading " . env('APP_ENV') . " environment (PHP " . PHP_VERSION . ")\n";
 
-// Load Composer autoloader
+# Load Composer autoloader
 require_once __DIR__ . '/vendor/autoload.php';
 
-// Define ROOT_DIR if not already defined (should be defined by config/boot.php)
+# Define ROOT_DIR if not already defined (should be defined by config/boot.php)
 if (!defined('ROOT_DIR')) {
     // print("- warning: ROOT_DIR constant must be defined\n  setting this value as ROOT_DIR : " . getcwd() . "\n");
     define('ROOT_DIR', getcwd());
@@ -25,9 +25,57 @@ if (!defined('ROOT_DIR')) {
 use Icebox\ActiveRecord\lib\Utils;
 use Icebox\Generator\MigrationGenerator;
 use Icebox\ActiveRecord\MigrationRunner;
-use Icebox\ActiveRecord\Config;
+use Icebox\ActiveRecord\Config as ArConfig;
 
-// // Initialize database connection if not already initialized
+
+#---------------------------------------------------------------------
+// If using CLI in framework directory, initialize database connection
+
+// echo getcwd() . "\n";
+// echo dirname(__FILE__) . "\n";
+
+// it is the framework repo and test environment,only then connect to database 
+if(getcwd() == dirname(__FILE__) && env('APP_ENV') == 'test') {
+    
+    # load environment variables
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__, '.env.test');
+    $dotenv->load();
+
+    $database_url = (string) env('DATABASE_URL');
+
+    if($database_url == null) {
+        throw new \LengthException('DATABASE_URL must have a value. example: mysql://username:password@host:port/database_name');
+    }
+    
+    // parse the URL
+    $parsed = ArConfig::parseDatabaseUrl($database_url);
+
+    die(print_r($parsed));
+
+    // Extract components
+    $dsn = $parsed['dsn'];
+    $username = $parsed['username'];
+    $password = $parsed['password'];
+    $options = $parsed['options'];
+
+    // User can customize options if needed
+    $options[PDO::ATTR_PERSISTENT] = true;
+
+    // Create PDO connection
+    $connection = new PDO($dsn, $username, $password, $options);
+
+    // Initialize ActiveRecord
+    ArConfig::initialize($connection);
+
+    // if(env('USE_ACTIVERECORD') != null && ( env('USE_ACTIVERECORD') == false || env('USE_ACTIVERECORD') == 'false' )) {
+    //     $database_url = env('DATABASE_URL');
+
+    //     if($database_url != null) {
+    //         ArConfig::parseDatabaseUrl($database_url);
+    //     }
+    // }
+}
+
 // if (!Config::isInitialized()) {
 //     // Default to SQLite database in project root
 //     $dbPath = ROOT_DIR . '/db/development.sqlite3';

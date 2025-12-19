@@ -2,7 +2,7 @@
 
 namespace Icebox\Tests;
 
-use Icebox\ActiveRecord\Config;
+use Icebox\ActiveRecord\Config as ArConfig;
 use PDO;
 
 /**
@@ -15,19 +15,19 @@ class TestHelper
      */
     public static function initializeTestDatabase(): void
     {
-        Config::initialize(function() {
-            return [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'username' => '',
-                'password' => ''
-                // Note: 'host' and 'charset' are not used for SQLite; if you need this, create PR
-                // The Config class handles SQLite DSN specially
-            ];
-        });
+        // Config::initialize(function() {
+        //     return [
+        //         'driver' => 'sqlite',
+        //         'database' => ':memory:',
+        //         'username' => '',
+        //         'password' => ''
+        //         // Note: 'host' and 'charset' are not used for SQLite; if you need this, create PR
+        //         // The Config class handles SQLite DSN specially
+        //     ];
+        // });
 
         // Create test tables
-        $pdo = Config::getConnection();
+        $pdo = ArConfig::getConnection();
         
         // Create users table for testing
         $pdo->exec("
@@ -61,11 +61,11 @@ class TestHelper
      */
     public static function cleanupTestDatabase(): void
     {
-        if (Config::isInitialized()) {
-            $pdo = Config::getConnection();
+        if (ArConfig::isInitialized()) {
+            $pdo = ArConfig::getConnection();
             $pdo->exec("DROP TABLE IF EXISTS users");
             $pdo->exec("DROP TABLE IF EXISTS posts");
-            Config::closeConnection();
+            ArConfig::closeConnection();
         }
     }
 
@@ -99,7 +99,7 @@ class TestHelper
      */
     public static function createTestData(): void
     {
-        $pdo = Config::getConnection();
+        $pdo = ArConfig::getConnection();
         
         // Insert test users
         $pdo->exec("INSERT INTO users (name, email, age, active) VALUES 
@@ -119,7 +119,7 @@ class TestHelper
      */
     public static function clearTestData(): void
     {
-        $pdo = Config::getConnection();
+        $pdo = ArConfig::getConnection();
         $pdo->exec("DELETE FROM users");
         $pdo->exec("DELETE FROM posts");
     }
@@ -129,7 +129,7 @@ class TestHelper
      */
     public static function assertTableExists(string $tableName): void
     {
-        $pdo = Config::getConnection();
+        $pdo = ArConfig::getConnection();
         $stmt = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='{$tableName}'");
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $stmt->closeCursor();
@@ -144,7 +144,7 @@ class TestHelper
      */
     public static function assertTableDoesNotExist(string $tableName): void
     {
-        $pdo = Config::getConnection();
+        $pdo = ArConfig::getConnection();
         $stmt = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='{$tableName}'");
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $stmt->closeCursor();
@@ -163,7 +163,7 @@ class TestHelper
      */
     public static function assertColumnExists(string $tableName, string $columnName, ?string $expectedType = null): void
     {
-        $pdo = Config::getConnection();
+        $pdo = ArConfig::getConnection();
         $stmt = $pdo->query("PRAGMA table_info('{$tableName}')");
         $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $stmt->closeCursor();
@@ -202,7 +202,7 @@ class TestHelper
      */
     public static function getTableInfo(string $tableName): array
     {
-        $pdo = Config::getConnection();
+        $pdo = ArConfig::getConnection();
         $stmt = $pdo->query("PRAGMA table_info('{$tableName}')");
         $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $stmt->closeCursor();
@@ -215,7 +215,7 @@ class TestHelper
      */
     public static function getAllTables(): array
     {
-        $pdo = Config::getConnection();
+        $pdo = ArConfig::getConnection();
         $stmt = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
         $tables = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
         $stmt->closeCursor();

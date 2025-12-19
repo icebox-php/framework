@@ -29,61 +29,63 @@ class Config
      * @param Closure $initializer Configuration closure
      * @throws PDOException
      */
-    public static function initialize(Closure $initializer)
+    public static function initialize(PDO $connection)
     {
-        $config = $initializer();
+        // $config = $initializer();
         
-        if (!is_array($config)) {
-            throw new \InvalidArgumentException('Configuration must return an array');
-        }
+        // if (!is_array($config)) {
+        //     throw new \InvalidArgumentException('Configuration must return an array');
+        // }
 
-        self::$config = $config;
-        self::createConnection();
+        // self::$config = $config;
+        // self::createConnection();
+
+        self::$connection = $connection;
     }
 
-    /**
-     * Create database connection
-     *
-     * @throws PDOException
-     */
-    private static function createConnection()
-    {
-        $driver = self::$config['driver'] ?? null;
-        if (!$driver) {
-            throw new \InvalidArgumentException("Missing required configuration: driver");
-        }
+    // /**
+    //  * Create database connection
+    //  *
+    //  * @throws PDOException
+    //  */
+    // private static function createConnection()
+    // {
+    //     $driver = self::$config['driver'] ?? null;
+    //     if (!$driver) {
+    //         throw new \InvalidArgumentException("Missing required configuration: driver");
+    //     }
 
-        $database = self::$config['database'] ?? null;
-        if (!$database) {
-            throw new \InvalidArgumentException("Missing required configuration: database");
-        }
+    //     $database = self::$config['database'] ?? null;
+    //     if (!$database) {
+    //         throw new \InvalidArgumentException("Missing required configuration: database");
+    //     }
 
-        $username = self::$config['username'] ?? '';
-        $password = self::$config['password'] ?? '';
-        $host = self::$config['host'] ?? '';
-        $charset = self::$config['charset'] ?? 'utf8mb4';
+    //     $username = self::$config['username'] ?? '';
+    //     $password = self::$config['password'] ?? '';
+    //     $host = self::$config['host'] ?? '';
+    //     $charset = self::$config['charset'] ?? 'utf8mb4';
 
-        // Handle SQLite specially since it has a different DSN format
-        if ($driver === 'sqlite') {
-            // For SQLite, database is the path (or :memory: for in-memory)
-            // Ignore host and charset parameters for SQLite
-            $dsn = "sqlite:{$database}";
-        } else {
-            // For other databases (MySQL, PostgreSQL), require host
-            if (!$host) {
-                throw new \InvalidArgumentException("Missing required configuration: host");
-            }
-            $dsn = "{$driver}:host={$host};dbname={$database};charset={$charset}";
-        }
+    //     // Handle SQLite specially since it has a different DSN format
+    //     if ($driver === 'sqlite') {
+    //         // For SQLite, database is the path (or :memory: for in-memory)
+    //         // Ignore host and charset parameters for SQLite
+    //         $dsn = "sqlite:{$database}";
+    //     } else {
+    //         // For other databases (MySQL, PostgreSQL), require host
+    //         if (!$host) {
+    //             throw new \InvalidArgumentException("Missing required configuration: host");
+    //         }
+    //         $dsn = "{$driver}:host={$host};dbname={$database};charset={$charset}";
+    //     }
 
-        $options = [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
-        ];
+    //     $options = [
+    //         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    //         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    //         PDO::ATTR_EMULATE_PREPARES => false,
+    //     ];
 
-        self::$connection = new PDO($dsn, $username, $password, $options);
-    }
+    //     self::$connection = new PDO($dsn, $username, $password, $options);
+    // }
 
     /**
      * Get database connection
@@ -139,5 +141,90 @@ class Config
     public static function closeConnection()
     {
         self::$connection = null;
+    }
+
+    /**
+     * Parse a database URL and return PDO components
+     * 
+     * @param string $url Database URL (e.g., mysql://root:password@127.0.0.1/forge?charset=UTF-8)
+     * @return array ['dsn' => string, 'username' => string, 'password' => string, 'options' => array]
+     * @throws \InvalidArgumentException
+     */
+    public static function parseDatabaseUrl($url)
+    {
+        #---------------------------------
+        #--- helper functions ---
+
+        /**
+         * Get default port for database scheme
+         */
+        $getDefaultPort = function($scheme)
+        {
+            $ports = [
+                'mysql' => 3306,
+                'pgsql' => 5432,
+                'sqlite' => null,
+            ];
+            return $ports[$scheme] ?? 3306;
+        };
+
+        /**
+         * Get default PDO options for a scheme
+         * Users can override these by passing options to Config::initialize()
+         */
+        $getDefaultOptions = function($scheme)
+        {
+            return [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ];
+        };
+
+        #---------------------------------
+        #--- function starts from here ---
+
+        $parsed = parse_url($url);
+
+        if (!$parsed || !isset($parsed['scheme'], $parsed['host'])) {
+            throw new \InvalidArgumentException('Invalid database URL format');
+        }
+
+        $scheme = $parsed['scheme'];
+        $host = $parsed['host'];
+        $port = $parsed['port'] ?? $getDefaultPort($scheme);
+        $database = ltrim($parsed['path'] ?? '', '/');
+        $username = $parsed['user'] ?? '';
+        $password = $parsed['pass'] ?? '';
+
+        if (empty($database)) {
+            throw new \InvalidArgumentException('Database name is required in URL path');
+        }
+
+        // Build DSN
+        $dsn = "{$scheme}:host={$host};port={$port};dbname={$database}";
+
+        // Parse query parameters for options
+        $options = $getDefaultOptions($scheme);
+        if (isset($parsed['query'])) {
+            parse_str($parsed['query'], $queryParams);
+            foreach ($queryParams as $key => $value) {
+                // Convert string booleans
+                if (strtolower($value) === 'true') {
+                    $value = true;
+                } elseif (strtolower($value) === 'false') {
+                    $value = false;
+                }
+                $options[$key] = $value;
+            }
+        }
+
+        return [
+            'dsn' => $dsn,
+            'username' => $username,
+            'password' => $password,
+            'options' => $options,
+        ];
+
+        
     }
 }
