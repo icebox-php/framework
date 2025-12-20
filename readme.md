@@ -9,18 +9,31 @@ Icebox includes a modern PDO-based ActiveRecord implementation with Rails-style 
 ### Database Configuration
 
 ```php
-use Icebox\ActiveRecord\Config;
+use Icebox\ActiveRecord\Config as ArConfig;
 
-Config::initialize(function() {
-    return [
-        'driver' => 'mysql',
-        'host' => 'localhost',
-        'database' => 'myapp',
-        'username' => 'root',
-        'password' => '',
-        'charset' => 'utf8mb4'
-    ];
-});
+$database_url = (string) env('DATABASE_URL');
+
+if($database_url == null) {
+    throw new \LengthException('DATABASE_URL must have a value. example: mysql://username:password@host:port/database_name');
+}
+
+// parse the URL
+$parsed = ArConfig::parseDatabaseUrl($database_url);
+
+// Extract components
+$dsn = $parsed['dsn'];
+$username = $parsed['username'];
+$password = $parsed['password'];
+$options = $parsed['options'];
+
+// User can customize options if needed
+$options[PDO::ATTR_PERSISTENT] = true;
+
+// Create PDO connection
+$connection = new PDO($dsn, $username, $password, $options);
+
+// Initialize ActiveRecord
+ArConfig::initialize($connection);
 ```
 
 ### Creating Models

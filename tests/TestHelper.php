@@ -3,6 +3,7 @@
 namespace Icebox\Tests;
 
 use Icebox\ActiveRecord\Config as ArConfig;
+use Dotenv\Dotenv;
 use PDO;
 
 /**
@@ -15,45 +16,8 @@ class TestHelper
      */
     public static function initializeTestDatabase(): void
     {
-        // Config::initialize(function() {
-        //     return [
-        //         'driver' => 'sqlite',
-        //         'database' => ':memory:',
-        //         'username' => '',
-        //         'password' => ''
-        //         // Note: 'host' and 'charset' are not used for SQLite; if you need this, create PR
-        //         // The Config class handles SQLite DSN specially
-        //     ];
-        // });
-
-        // Create test tables
-        $pdo = ArConfig::getConnection();
-        
-        // Create users table for testing
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name VARCHAR(255),
-                email VARCHAR(255),
-                age INTEGER,
-                active BOOLEAN DEFAULT 1,
-                approved_at DATETIME,
-                deleted_at DATETIME,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        ");
-
-        // Create posts table for testing relationships
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS posts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                title VARCHAR(255),
-                content TEXT,
-                published BOOLEAN DEFAULT 0,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        ");
+        self::connectToDatabase();
+        self::createTestTables();
     }
 
     /**
@@ -221,5 +185,61 @@ class TestHelper
         $stmt->closeCursor();
         
         return $tables;
+    }
+
+    public static function connectToDatabase() {
+        $database_url = (string) \Icebox\Utils::env('DATABASE_URL');
+
+        if($database_url == null) {
+            throw new \LengthException("DATABASE_URL must have a value. example: 'sqlite::memory:' or 'mysql://username:password@host:port/database_name'");
+        }
+        
+        // parse the URL
+        $parsed = ArConfig::parseDatabaseUrl($database_url);
+
+        // Extract components
+        $dsn = $parsed['dsn'];
+        $username = $parsed['username'];
+        $password = $parsed['password'];
+        $options = $parsed['options'];
+
+        // User can customize options if needed
+        // $options[PDO::ATTR_PERSISTENT] = true;
+
+        // Create PDO connection
+        $connection = new PDO($dsn, $username, $password, $options);
+
+        // Initialize ActiveRecord
+        ArConfig::initialize($connection);
+    }
+
+    private static function createTestTables() {
+        $pdo = ArConfig::getConnection();
+        
+        // Create users table for testing
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name VARCHAR(255),
+                email VARCHAR(255),
+                age INTEGER,
+                active BOOLEAN DEFAULT 1,
+                approved_at DATETIME,
+                deleted_at DATETIME,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ");
+
+        // Create posts table for testing relationships
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS posts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                title VARCHAR(255),
+                content TEXT,
+                published BOOLEAN DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ");
     }
 }

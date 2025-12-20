@@ -96,7 +96,7 @@ class Config
     public static function getConnection()
     {
         if (!self::$connection) {
-            throw new \RuntimeException('Database connection not initialized. Call Config::initialize() first.');
+            throw new \RuntimeException('Database connection not initialized. Call \Icebox\ActiveRecord\Config::initialize() first.');
         }
 
         return self::$connection;
@@ -151,7 +151,16 @@ class Config
      * @throws \InvalidArgumentException
      */
     public static function parseDatabaseUrl($url)
-    {
+    {   
+        if($url == 'sqlite::memory:') {
+            return [
+                'dsn' => $url,
+                'username' => '',
+                'password' => '',
+                'options' => [],
+            ];
+        }
+
         #---------------------------------
         #--- helper functions ---
 

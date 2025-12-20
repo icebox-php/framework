@@ -371,7 +371,6 @@ PHP;
             $upSql = $param2;
             $downSql = $param3;
             $migrationsDir = $param4 ?? 'db/migrations';
-
             $content = self::generateFileContent($className, $upSql, $downSql);
         }
 
