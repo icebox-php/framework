@@ -7,6 +7,7 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Handler\SyslogHandler;
 use Monolog\Formatter\LineFormatter;
+use Monolog\Level;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
@@ -31,6 +32,20 @@ use Psr\Log\LogLevel;
  */
 class Log
 {
+    /**
+     * Level map for converting string levels to Monolog integer values
+     */
+    private const LEVEL_MAP = [
+        'debug' => Level::Debug->value,
+        'info' => Level::Info->value,
+        'notice' => Level::Notice->value,
+        'warning' => Level::Warning->value,
+        'error' => Level::Error->value,
+        'critical' => Level::Critical->value,
+        'alert' => Level::Alert->value,
+        'emergency' => Level::Emergency->value,
+    ];
+
     /**
      * @var LoggerInterface|null Singleton logger instance
      */
@@ -103,11 +118,11 @@ class Log
      * Add a syslog handler
      * 
      * @param string $ident Ident string
+     * @param string $level Log level (debug, info, warning, error, etc.) 
      * @param int $facility Syslog facility (default: LOG_USER)
-     * @param string $level Log level (debug, info, warning, error, etc.)
      * @return void
      */
-    public static function addSyslogHandler(string $ident = 'icebox', int $facility = LOG_USER, string $level = 'debug'): void
+    public static function addSyslogHandler(string $ident = 'icebox', string $level = 'debug', int $facility = LOG_USER): void
     {
         $handler = new SyslogHandler($ident, $facility, self::normalizeLevel($level));
         self::$handlers[] = $handler;
@@ -148,12 +163,12 @@ class Log
      * @param string $level Log level (debug, info, warning, error, etc.)
      * @return void
      */
-    public static function addClosureHandler(\Closure $closure, string $level = 'debug'): void
+    public static function addClosureHandler(\Closure $closure, string $level = 'error'): void
     {
         $handler = new class($closure, self::normalizeLevel($level)) extends \Monolog\Handler\AbstractHandler {
             private $closure;
             
-            public function __construct(\Closure $closure, $level = Logger::DEBUG)
+            public function __construct(\Closure $closure, $level)
             {
                 parent::__construct($level, true);
                 $this->closure = $closure;
@@ -230,19 +245,7 @@ class Log
     private static function normalizeLevel(string $level): int
     {
         $level = strtolower($level);
-        
-        $levelMap = [
-            'debug' => Logger::DEBUG,
-            'info' => Logger::INFO,
-            'notice' => Logger::NOTICE,
-            'warning' => Logger::WARNING,
-            'error' => Logger::ERROR,
-            'critical' => Logger::CRITICAL,
-            'alert' => Logger::ALERT,
-            'emergency' => Logger::EMERGENCY,
-        ];
-        
-        return $levelMap[$level] ?? Logger::DEBUG;
+        return self::LEVEL_MAP[$level] ?? self::LEVEL_MAP['debug'];
     }
 
     /**
