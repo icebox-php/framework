@@ -23,707 +23,77 @@ if (!defined('ROOT_DIR')) {
     define('ROOT_DIR', getcwd());
 }
 
-use Icebox\ActiveRecord\lib\Utils;
-use Icebox\Generator\MigrationGenerator;
-use Icebox\ActiveRecord\MigrationRunner;
-use Icebox\ActiveRecord\DatabaseCreator;
-// use Icebox\ActiveRecord\Config as ArConfig;
+use Icebox\Cli\CommandRegistry;
+use Icebox\Cli\Commands\GenerateCrudCommand;
+use Icebox\Cli\Commands\GenerateMigrationCommand;
+use Icebox\Cli\Commands\DbCreateCommand;
+use Icebox\Cli\Commands\DbMigrateCommand;
+use Icebox\Cli\Commands\DbStatusCommand;
+use Icebox\Cli\Commands\DbRollbackCommand;
+use Icebox\Cli\Commands\DbResetCommand;
+use Icebox\Cli\Commands\TestCommand;
+use Icebox\Cli\Commands\ConsoleCommand;
+use Icebox\Cli\Commands\ServerCommand;
 
+// Initialize command registry
+$registry = new CommandRegistry();
 
-#---------------------------------------------------------------------
-// If using CLI in framework directory, initialize database connection
+// Register all commands with their aliases
+$registry->register(new GenerateCrudCommand(), ['g crud', 'generate crud']);
+$registry->register(new GenerateMigrationCommand(), ['g migration', 'generate migration']);
+$registry->register(new DbCreateCommand(), ['db:create']);
+$registry->register(new DbMigrateCommand(), ['db:migrate']);
+$registry->register(new DbStatusCommand(), ['db:migrate:status']);
+$registry->register(new DbRollbackCommand(), ['db:rollback']);
+$registry->register(new DbResetCommand(), ['db:reset']);
+$registry->register(new TestCommand(), ['test']);
+$registry->register(new ConsoleCommand(), ['console', 'c']);
+$registry->register(new ServerCommand(), ['server', 'serve', 's']);
 
-// echo getcwd() . "\n";
-// echo dirname(__FILE__) . "\n";
-
-# Load environemt variables here for framework testing only
-# Integrated web application load their own environemt variables.
-// if(getcwd() == dirname(__FILE__) && Icebox\Utils::env('APP_ENV') == 'test') {
-//     # load environment variables
-//     $dotenv = Dotenv\Dotenv::createImmutable(__DIR__, '.env.test');
-//     $dotenv->load();
-// }
-
-// if (!Config::isInitialized()) {
-//     // Default to SQLite database in project root
-//     $dbPath = ROOT_DIR . '/db/development.sqlite3';
-//     $dbDir = dirname($dbPath);
-//     if (!is_dir($dbDir)) {
-//         mkdir($dbDir, 0755, true);
-//     }
-    
-//     Config::initialize(function() use ($dbPath) {
-//         return [
-//             'driver' => 'sqlite',
-//             'database' => $dbPath,
-//             'username' => '',
-//             'password' => ''
-//         ];
-//     });
-// }
-
-// foreach($argv as $value)
-// {
-  // echo "$value\n";
-// }
-
-function cli_show_main_help() {
-  echo "Icebox Framework CLI Tool\n";
-  echo "=========================\n\n";
-  
-  echo "Usage:\n";
-  echo "  php icebox <command> [options] [arguments]\n\n";
-
-  echo "Available Commands:\n";
-  echo "  g, generate crud <name> [attributes]  # Generate CRUD resources (controller, model, views)\n";
-  echo "  g, generate migration <name> [columns] # Generate database migration\n";
-  echo "  db:create                             # Create database from DATABASE_URL\n";
-  echo "  db:migrate                            # Run pending database migrations\n";
-  echo "  db:migrate:status                     # Show migration status\n";
-  echo "  db:rollback [steps=N]                 # Rollback last N migrations (default: 1)\n";
-  echo "  db:reset                              # Rollback all migrations\n";
-  echo "  test [test-file] [options]            # Run PHPUnit tests\n";
-  echo "  console, c                            # Start interactive PHP console (REPL)\n";
-  echo "  server, s                             # Start PHP built-in web server\n";
-  echo "\n";
-
-  echo "Options:\n";
-  echo "  -h, --help, help         # Show this help message and quit\n";
-  echo "  help <command>           # Show help for a specific command\n";
-  echo "\n";
-
-  echo "Examples:\n";
-  echo "  php icebox generate crud post title:string content:text\n";
-  echo "  php icebox generate migration create_posts_table title:string content:text\n";
-  echo "  php icebox db:create\n";
-  echo "  php icebox db:migrate\n";
-  echo "  php icebox db:migrate:status\n";
-  echo "  php icebox db:rollback\n";
-  echo "  php icebox db:rollback steps=2\n";
-  echo "  php icebox db:reset\n";
-  echo "  php icebox test\n";
-  echo "  php icebox test tests/UserTest.php\n";
-  echo "  php icebox console\n";
-  echo "  php icebox c\n";
-  echo "  php icebox server\n";
-  echo "  php icebox serve\n";
-  echo "  php icebox s\n";
-  echo "\n";
-
-  echo "For more information about a command, use:\n";
-  echo "  php icebox help <command>\n";
-  echo "\n";
+// Handle command line arguments
+if (count($argv) == 1) { // no arguments
+    $registry->showHelp();
+    exit(0);
 }
 
-function cli_show_specific_help_generate() {
-  echo "Usage:\n";
-  echo "  php icebox generate <type> <name> [options]\n\n";
-
-  echo "Type:\n";
-  echo "  crud               # Generate CRUD resources (controller, model, views)\n";
-  echo "  migration          # Generate database migration\n";
-  echo "\n";
-  echo "Migration Examples:\n";
-  echo "  php icebox generate migration create_posts_table\n";
-  echo "  php icebox generate migration create_posts_table title:string content:text\n";
-  echo "  php icebox generate migration add_user_id_to_posts user_id:integer\n";
-  echo "\n";
-}
-
-function cli_show_specific_help_test() {
-  echo "Usage:\n";
-  echo "  php icebox test [test-file] [options]\n\n";
-  echo "Run PHPUnit tests. If no arguments are provided, runs all tests in the 'tests' folder.\n";
-  echo "You can specify a test file (e.g., tests/create_user_test.php) or a folder.\n";
-  echo "Additional options are passed directly to PHPUnit.\n";
-  echo "\n";
-}
-
-function cli_show_specific_help_console() {
-  echo "Usage:\n";
-  echo "  php icebox console\n";
-  echo "  php icebox c\n\n";
-  echo "Start an interactive PHP console (REPL) with Icebox framework loaded.\n";
-  echo "This provides access to all Icebox classes and your application models.\n";
-  echo "\n";
-  echo "Examples:\n";
-  echo "  php icebox console          # Start the console\n";
-  echo "  php icebox c                # Short alias\n";
-  echo "\n";
-}
-
-function cli_show_specific_help_server() {
-  echo "Usage:\n";
-  echo "  php icebox server [options]\n";
-  echo "  php icebox serve [options]\n";
-  echo "  php icebox s [options]\n\n";
-  echo "Start PHP built-in web server with document root set to 'public' directory.\n";
-  echo "The server runs on http://localhost:8000 by default.\n";
-  echo "\n";
-  echo "Options:\n";
-  echo "  -p, --port=PORT      Set the port number (default: 8000)\n";
-  echo "  -h, --host=HOST      Set the host address (default: localhost)\n";
-  echo "\n";
-  echo "Examples:\n";
-  echo "  php icebox server          # Start the web server with default settings\n";
-  echo "  php icebox serve           # Short alias\n";
-  echo "  php icebox s               # Short alias\n";
-  echo "  php icebox server -p=8011 --host=localhost\n";
-  echo "  php icebox serve -p=8011 --host=localhost\n";
-  echo "  php icebox s --port=8011 -h=localhost\n";
-  echo "\n";
-  echo "Note: The server will look for a 'public' directory in the current working directory.\n";
-  echo "If the directory doesn't exist, the server may not work correctly.\n";
-  echo "\n";
-}
-
-function cli_show_specific_help_db_create() {
-  echo "Usage:\n";
-  echo "  php icebox db:create\n\n";
-  echo "Create database from DATABASE_URL environment variable.\n";
-  echo "This command creates the database if it doesn't exist.\n";
-  echo "\n";
-  echo "Supported database drivers:\n";
-  echo "  - SQLite: Creates database file and directories\n";
-  echo "  - MySQL: Creates database on MySQL server\n";
-  echo "  - PostgreSQL: Creates database on PostgreSQL server\n";
-  echo "\n";
-  echo "Examples:\n";
-  echo "  # SQLite\n";
-  echo "  DATABASE_URL=sqlite:/path/to/database.sqlite\n";
-  echo "  php icebox db:create\n";
-  echo "\n";
-  echo "  # MySQL\n";
-  echo "  DATABASE_URL=mysql://user:pass@localhost:3306/database_name\n";
-  echo "  php icebox db:create\n";
-  echo "\n";
-  echo "  # PostgreSQL\n";
-  echo "  DATABASE_URL=pgsql://user:pass@localhost:5432/database_name\n";
-  echo "  php icebox db:create\n";
-  echo "\n";
-  echo "Note: The command reads DATABASE_URL from environment variables.\n";
-  echo "Make sure DATABASE_URL is set before running the command.\n";
-  echo "\n";
-}
-
-function cli_show_specific_help($args) {
-  if($args[2] == 'g' || $args[2] == 'generate') {
-    cli_show_specific_help_generate($args);
-  } else if($args[2] == 'test') {
-    cli_show_specific_help_test();
-  } else if($args[2] == 'console' || $args[2] == 'c') {
-    cli_show_specific_help_console();
-  } else if($args[2] == 'server' || $args[2] == 'serve' || $args[2] == 's') {
-    cli_show_specific_help_server();
-  } else if($args[2] == 'db:create') {
-    cli_show_specific_help_db_create();
-  }
-}
-
-function cli_create_file($file_name, $file_full_path, $text) {
-  if(file_put_contents($file_full_path, $text)) {
-    echo "create  $file_name\n";
-  } else {
-    echo "error   can not create file: $file_name\n";
-  }
-}
-
-/* cli generator helper */
-  function generator_split_attr_get_column_names($attrs) {
-    $arr = [];
-    foreach($attrs as $key => $value) {
-      $temp = explode(':', $value);
-      $arr[$temp[0]] = isset($temp[1]) ? $temp[1] : 'string';
-    }
-    return $arr;
-  }
-  function generator_split_attr_for_controller_params($attrs) {
-    $arr = generator_split_attr_get_column_names($attrs);
-
-    $str = "array('";
-    $str .= implode("', '", array_keys($arr));
-    $str .= "')";
-
-    if($str == "array('')") { $str = "array()"; }
-
-    return $str;
-  }
-
-  function generator_get_html_input_type($column_type) {
-    $supported_types = [
-      // :binary
-      'boolean' => array( 'html_tag' => 'checkbox', 'type' => ''),
-      'date' => array( 'html_tag' => 'input', 'type' => 'date'),
-      'datetime' => array( 'html_tag' => 'input', 'type' => 'datetime-local'),
-      'decimal' => array( 'html_tag' => 'input', 'type' => 'number'),
-
-      'float' => array( 'html_tag' => 'input', 'type' => 'number'),
-      'integer' => array( 'html_tag' => 'input', 'type' => 'number'),
-      // 'primary_key' => array( 'html_tag' => 'input', 'type' => 'hidden'),
-      'string' => array( 'html_tag' => 'input', 'type' => 'text'),
-      'text' => array( 'html_tag' => 'textarea', 'type' => ''),
-
-      'time' => array( 'html_tag' => 'input', 'type' => 'time'),
-      'select' => array( 'html_tag' => 'select', 'type' => ''),
-      // 'timestamp' => array( 'html_tag' => 'input', 'type' => 'datetime-local'),
-    ];
-
-    return (isset($supported_types[$column_type]) ? $supported_types[$column_type] : $supported_types['string']);
-  }
-/* ./cli generator helper */
-
-function cli_create_controller($controller_name, $model_name, $singular, $plural, $attrs) {
-  ob_start();
-  include(__DIR__ . '/src/generator/controller.php');
-  $controller_text = ob_get_clean();
-
-  $file_name = "app/Controller/$controller_name.php";
-  $file_full_path = ROOT_DIR . "/app/Controller/$controller_name.php";
-  cli_create_file($file_name, $file_full_path, $controller_text);
-}
-
-function cli_create_model($model_name) {
-  ob_start();
-  include(__DIR__ . '/src/generator/model.php');
-  $model_text = ob_get_clean();
-
-  $file_name = "app/Model/$model_name.php";
-  $file_full_path = ROOT_DIR . "/app/Model/$model_name.php";
-  cli_create_file($file_name, $file_full_path, $model_text);
-}
-
-function cli_create_view__form($singular, $plural, $attrs) {
-  $view_folder = ucfirst($plural);
-
-  // form_helper
-  $form_helper = new \Icebox\Generator\FormHelper;
-
-  ob_start();
-  include(__DIR__ . '/src/generator/view/_form.html.php');
-  $view_text = ob_get_clean();
-
-  $file_name = "app/View/$view_folder/_form.html.php";
-  $file_full_path = ROOT_DIR . "/app/View/$view_folder/_form.html.php";
-
-  if (!is_dir(ROOT_DIR . "/app/View/$view_folder")) {
-    // dir doesn't exist, make it
-    mkdir(ROOT_DIR . "/app/View/$view_folder");
-  }
-  cli_create_file($file_name, $file_full_path, $view_text);
-}
-
-function cli_create_view_edit($singular, $plural) {
-  $view_folder = ucfirst($plural);
-
-  ob_start();
-  include(__DIR__ . '/src/generator/view/edit.html.php');
-  $view_text = ob_get_clean();
-
-  $file_name = "app/View/$view_folder/edit.html.php";
-  $file_full_path = ROOT_DIR . "/app/View/$view_folder/edit.html.php";
-
-  if (!is_dir(ROOT_DIR . "/app/View/$view_folder")) {
-    // dir doesn't exist, make it
-    mkdir(ROOT_DIR . "/app/View/$view_folder");
-  }
-  cli_create_file($file_name, $file_full_path, $view_text);
-}
-
-function cli_create_view_index($singular, $plural) {
-  $view_folder = ucfirst($plural);
-
-  ob_start();
-  include(__DIR__ . '/src/generator/view/index.html.php');
-  $view_text = ob_get_clean();
-
-  $file_name = "app/View/$view_folder/index.html.php";
-  $file_full_path = ROOT_DIR . "/app/View/$view_folder/index.html.php";
-
-  if (!is_dir(ROOT_DIR . "/app/View/$view_folder")) {
-    // dir doesn't exist, make it
-    mkdir(ROOT_DIR . "/app/View/$view_folder");
-  }
-  cli_create_file($file_name, $file_full_path, $view_text);
-}
-
-function cli_create_view_new($singular, $plural) {
-  $view_folder = ucfirst($plural);
-
-  ob_start();
-  include(__DIR__ . '/src/generator/view/new.html.php');
-  $view_text = ob_get_clean();
-
-  $file_name = "app/View/$view_folder/new.html.php";
-  $file_full_path = ROOT_DIR . "/app/View/$view_folder/new.html.php";
-
-  if (!is_dir(ROOT_DIR . "/app/View/$view_folder")) {
-    // dir doesn't exist, make it
-    mkdir(ROOT_DIR . "/app/View/$view_folder");
-  }
-  cli_create_file($file_name, $file_full_path, $view_text);
-}
-
-function cli_create_view_show($singular, $plural) {
-  $view_folder = ucfirst($plural);
-
-  ob_start();
-  include(__DIR__ . '/src/generator/view/show.html.php');
-  $view_text = ob_get_clean();
-
-  $file_name = "app/View/$view_folder/show.html.php";
-  $file_full_path = ROOT_DIR . "/app/View/$view_folder/show.html.php";
-
-  if (!is_dir(ROOT_DIR . "/app/View/$view_folder")) {
-    // dir doesn't exist, make it
-    mkdir(ROOT_DIR . "/app/View/$view_folder");
-  }
-  cli_create_file($file_name, $file_full_path, $view_text);
-}
-
-function cli_insert_resource_route($plural) {
-  $controller = ucfirst($plural);
-
-  $route_file = ROOT_DIR . '/config/routes.php';
-  // $f = file_get_contents($route_file);
-
-  $route_text = '';
-
-  $fp = fopen($route_file, "r+");
-  $start_pos = ftell($fp);
-  for($i=0; $i<5; $i++) { $route_text .= fgets($fp); }
-  // fputs($fp, "my strings\n");
-
-  $route_text .= "\n" . '$route->resource(\'' . $plural . '\', \'' . $controller . '\');' . "\n";
-  $route_text .= stream_get_contents($fp);
-  fseek($fp, $start_pos);
-
-  // echo ftell($fp);
-
-  // echo $route_text;
-
-  fwrite($fp, $route_text);
-  fclose($fp);
-}
-
-function cli_run_generate_crud($singular, $args) {
-  $plural = Utils::pluralize($singular);
-
-  $model_name = ucfirst($singular);
-  $controller_name = ucfirst($plural) . 'Controller';
-
-  // find attrs list from commad
-  $attrs = array_slice($args, 4);
-
-  cli_create_controller($controller_name, $model_name, $singular, $plural, $attrs);
-  cli_create_model($model_name);
-
-  // create view
-  cli_create_view__form($singular, $plural, $attrs);
-  cli_create_view_edit($singular, $plural);
-  cli_create_view_index($singular, $plural);
-  cli_create_view_new($singular, $plural);
-  cli_create_view_show($singular, $plural);
-  cli_insert_resource_route($plural);
-}
-
-/* Migration generator functions */
-function cli_run_generate_migration($migration_name, $args) {
-  echo "Migration generator started\n";
-  
-  // Get columns from command arguments
-  $columns = array_slice($args, 4);
-
-  // Create migration file
-  $migrations_dir = ROOT_DIR . '/db/migrations';
-  // $filePath = MigrationGenerator::createMigrationFile($migration_name, $up_sql, $down_sql, $migrations_dir);
-  $filePath = MigrationGenerator::createMigrationFile($migration_name, $columns, $migrations_dir);
-  
-  // Get relative path for display
-  $relativePath = str_replace(ROOT_DIR . '/', '', $filePath);
-  echo "create  $relativePath\n";
-  echo "Migration created successfully!\n";
-}
-/* ./Migration generator functions */
-
-/* Migration runner functions */
-function cli_run_db_migrate() {
-  echo "Running database migrations...\n";
-  
-  try {
-    $runner = new MigrationRunner();
-    $migrated = $runner->migrate();
-    
-    if (empty($migrated)) {
-      echo "No pending migrations.\n";
-    } else {
-      echo "Successfully ran " . count($migrated) . " migration(s):\n";
-      foreach ($migrated as $file) {
-        echo "  - " . basename($file) . "\n";
-      }
-    }
-  } catch (\Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n";
-    exit(1);
-  }
-}
-
-function cli_run_db_status() {
-  echo "Migration Status\n";
-  echo "================\n\n";
-  
-  try {
-    $runner = new MigrationRunner();
-    $status = $runner->status();
-    
-    echo "Executed migrations: " . $status['total_executed'] . "\n";
-    if (!empty($status['executed'])) {
-      foreach ($status['executed'] as $migration) {
-        echo "  [X] " . $migration['file'] . "\n";
-      }
-    }
-    
-    echo "\nPending migrations: " . $status['total_pending'] . "\n";
-    if (!empty($status['pending'])) {
-      foreach ($status['pending'] as $migration) {
-        echo "  [ ] " . $migration['file'] . "\n";
-      }
-    } else {
-      echo "  No pending migrations.\n";
-    }
-    
-  } catch (\Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n";
-    exit(1);
-  }
-}
-
-function cli_run_db_rollback($args) {
-  $steps = 1;
-  
-  // Parse steps parameter
-  foreach ($args as $arg) {
-    if (strpos($arg, 'steps=') === 0) {
-      $steps = (int) substr($arg, 6);
-      if ($steps < 1) {
-        echo "Error: steps must be at least 1\n";
-        exit(1);
-      }
-    }
-  }
-  
-  echo "Rolling back $steps migration(s)...\n";
-  
-  try {
-    $runner = new MigrationRunner();
-    $rolledBack = $runner->rollback($steps);
-    
-    if (empty($rolledBack)) {
-      echo "No migrations to rollback.\n";
-    } else {
-      echo "Successfully rolled back " . count($rolledBack) . " migration(s):\n";
-      foreach ($rolledBack as $file) {
-        echo "  - " . basename($file) . "\n";
-      }
-    }
-  } catch (\Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n";
-    exit(1);
-  }
-}
-
-function cli_run_db_reset() {
-  echo "Rolling back all migrations...\n";
-  
-  try {
-    $runner = new MigrationRunner();
-    $rolledBack = $runner->reset();
-    
-    if (empty($rolledBack)) {
-      echo "No migrations to rollback.\n";
-    } else {
-      echo "Successfully rolled back all " . count($rolledBack) . " migration(s).\n";
-    }
-  } catch (\Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n";
-    exit(1);
-  }
-}
-/* Database creation functions */
-function cli_run_db_create() {
-  echo "Creating database from DATABASE_URL...\n";
-  
-  // Get DATABASE_URL from environment
-  $databaseUrl = Icebox\Utils::env('DATABASE_URL');
-  
-  if (!$databaseUrl) {
-    echo "Error: DATABASE_URL environment variable is not set.\n";
-    echo "Set DATABASE_URL before running this command.\n";
-    echo "Example: DATABASE_URL=sqlite:/path/to/database.sqlite\n";
-    exit(1);
-  }
-  
-  echo "Using DATABASE_URL: " . $databaseUrl . "\n";
-  
-  $result = DatabaseCreator::createDatabase($databaseUrl);
-  
-  if ($result['success']) {
-    echo "✓ " . $result['message'] . "\n";
-    echo "Database created successfully!\n";
-  } else {
-    echo "✗ " . $result['message'] . "\n";
-    echo "Failed to create database.\n";
-    exit(1);
-  }
-}
-
-/* ./Database creation functions */
-
-/* ./Migration runner functions */
-
-function cli_run_test($args) {
-  // Remove the first two arguments: script name and 'test'
-  $test_args = array_slice($args, 2);
-  
-  // Build PHPUnit command
-  $phpunit = __DIR__ . '/vendor/bin/phpunit';
-  if (!file_exists($phpunit)) {
-    echo "Error: PHPUnit not found at $phpunit. Run 'composer install' first.\n";
-    exit(1);
-  }
-  
-  $command = escapeshellcmd($phpunit);
-  
-  // If no arguments provided, default to tests folder
-  if (empty($test_args)) {
-    $test_args[] = 'tests';
-  }
-  
-  foreach ($test_args as $arg) {
-    $command .= ' ' . escapeshellarg($arg);
-  }
-  
-  echo "Running: $command\n";
-  passthru($command, $return_var);
-  exit($return_var);
-}
-
-function cli_run_console($args) {
-  // Check if PsySH is available
-  $psysh = 'vendor/bin/psysh';
-  if (!file_exists($psysh)) {
-    echo "Error: PsySH not found at $psysh. Run 'composer install' first.\n";
-    exit(1);
-  }
-  
-  // Show message and load PsySH directly
-  // echo "Loading development environment (PHP " . PHP_VERSION . ")\n";
-  echo "Type 'exit' to quit, 'help' for help.\n\n";
-  
-  // Run PsySH directly without bootstrap config
-  // The application will handle autoloading via its own bootstrap
-  passthru(escapeshellcmd($psysh), $return_var);
-  
-  exit($return_var);
-}
-
-function cli_run_server($args) {
-  $host = 'localhost';
-  $port = '8000';
-
-  // Parse command line arguments
-  foreach ($args as $key => $arg) {
-    if (strpos($arg, '-p=') === 0 || strpos($arg, '--port=') === 0) {
-      $port = substr($arg, strpos($arg, '=') + 1);
-      unset($args[$key]);
-    } elseif (strpos($arg, '-h=') === 0 || strpos($arg, '--host=') === 0) {
-      $host = substr($arg, strpos($arg, '=') + 1);
-      unset($args[$key]);
-    }
-  }
-
-  // Re-index the array after unsetting elements
-  $args = array_values($args);
-
-  echo "Starting PHP built-in web server...\n";
-  echo "Document root: public\n";
-  echo "URL: http://$host:$port\n";
-  echo "Press Ctrl+C to stop the server\n\n";
-
-  $public_dir = ROOT_DIR . '/public';
-
-  // Check if public directory exists
-  if (!is_dir($public_dir)) {
-    echo "Warning: 'public' directory not found in current working directory.\n";
-    echo "The server may not work correctly.\n\n";
-  }
-
-  // Build the command
-  $command = "php -S $host:$port -t " . $public_dir;
-
-  // Pass through any additional arguments (e.g., for router script)
-  if (count($args) > 2) {
-    for ($i = 2; $i < count($args); $i++) {
-      $command .= ' ' . escapeshellarg($args[$i]);
-    }
-  }
-
-  echo $command . "\n";
-
-  passthru($command, $return_var);
-  exit($return_var);
-}
-
-if(count($argv) == 1) { // no arguments
-  cli_show_main_help();
-
-} else if($argv[1] == 'help' || $argv[1] == '-h' || $argv[1] == '--help') { // help arguments
-
-  if(isset($argv[2])) {
-    cli_show_specific_help($argv);
-  } else {
-    cli_show_main_help();
-  }
-
-} else { // other arguments
-
-  if($argv[1] == 'g' || $argv[1] == 'generate') {
-
-    if(isset($argv[2])) {
-      if($argv[2] == 'crud') {
-        echo "Crud generator started\n";
-        $singular = $argv[3];
-        cli_run_generate_crud($singular, $argv);
-      } else if($argv[2] == 'migration') {
-        if(!isset($argv[3])) {
-          echo "Error: Migration name is required\n";
-          echo "Usage: php icebox generate migration <migration_name> [columns]\n";
-          exit(1);
+$commandName = $argv[1];
+
+// Handle help commands
+if ($commandName == 'help' || $commandName == '-h' || $commandName == '--help') {
+    if (isset($argv[2])) {
+        // Handle two-word commands for help
+        $helpCommandName = $argv[2];
+        if (isset($argv[3]) && ($helpCommandName == 'g' || $helpCommandName == 'generate')) {
+            $subCommand = $argv[3];
+            if ($subCommand == 'crud' || $subCommand == 'migration') {
+                $helpCommandName = $helpCommandName . ' ' . $subCommand;
+            }
         }
-        $migration_name = $argv[3];
-        cli_run_generate_migration($migration_name, $argv);
-      }
+        
+        $command = $registry->get($helpCommandName);
+        if ($command) {
+            $command->help();
+        } else {
+            echo "Unknown command: {$argv[2]}\n";
+            echo "Try: php icebox -h\n";
+            exit(1);
+        }
     } else {
-      echo "Option missing\n";
-      echo "Try: php icebox -h <command-name>\n";
+        $registry->showHelp();
     }
-  } else if($argv[1] == 'db:create') {
-    cli_run_db_create();
-  } else if($argv[1] == 'db:migrate') {
-    cli_run_db_migrate();
-  } else if($argv[1] == 'db:migrate:status') {
-    cli_run_db_status();
-  } else if($argv[1] == 'db:rollback') {
-    cli_run_db_rollback($argv);
-  } else if($argv[1] == 'db:reset') {
-    cli_run_db_reset();
-  } else if($argv[1] == 'test') {
-    cli_run_test($argv);
-  } else if($argv[1] == 'console' || $argv[1] == 'c') {
-    cli_run_console($argv);
-  } else if($argv[1] == 'server' || $argv[1] == 'serve' || $argv[1] == 's') {
-    cli_run_server($argv);
-  } else {
-    echo "Unknown command: {$argv[1]}\n";
-    echo "Try: php icebox -h\n";
-  }
+    exit(0);
 }
+
+// Handle generate command (special case for two-word commands)
+if ($commandName == 'g' || $commandName == 'generate') {
+    if (isset($argv[2])) {
+        $subCommand = $argv[2];
+        if ($subCommand == 'crud' || $subCommand == 'migration') {
+            $commandName = $commandName . ' ' . $subCommand;
+        }
+    }
+}
+
+// Dispatch the command
+$exitCode = $registry->dispatch($commandName, $argv);
+exit($exitCode);
