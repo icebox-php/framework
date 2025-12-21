@@ -12,7 +12,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
 /**
- * Simple Rails-like logger for Icebox Framework
+ * Simple yet powerful, full-featured logger for the Icebox Framework
  * 
  * Usage:
  *   // Add handlers (no default handlers)

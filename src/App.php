@@ -189,7 +189,7 @@ class App {
     }
 
     public static function view_root() {
-       return dirname(self::$file) . '/src/app/View';
+       return dirname(self::$file) . '/app/View';
     }
 
     public static function is_https_connection() {
