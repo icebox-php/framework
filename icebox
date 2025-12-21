@@ -39,8 +39,8 @@ use Icebox\Cli\Commands\ServerCommand;
 $registry = new CommandRegistry();
 
 // Register all commands with their aliases
-$registry->register(new GenerateCrudCommand(), ['g crud', 'generate crud']);
-$registry->register(new GenerateMigrationCommand(), ['g migration', 'generate migration']);
+$registry->register(new GenerateCrudCommand(), ['g:crud', 'generate:crud']);
+$registry->register(new GenerateMigrationCommand(), ['g:migration', 'generate:migration']);
 $registry->register(new DbCreateCommand(), ['db:create']);
 $registry->register(new DbMigrateCommand(), ['db:migrate']);
 $registry->register(new DbStatusCommand(), ['db:migrate:status']);
@@ -61,16 +61,7 @@ $commandName = $argv[1];
 // Handle help commands
 if ($commandName == 'help' || $commandName == '-h' || $commandName == '--help') {
     if (isset($argv[2])) {
-        // Handle two-word commands for help
-        $helpCommandName = $argv[2];
-        if (isset($argv[3]) && ($helpCommandName == 'g' || $helpCommandName == 'generate')) {
-            $subCommand = $argv[3];
-            if ($subCommand == 'crud' || $subCommand == 'migration') {
-                $helpCommandName = $helpCommandName . ' ' . $subCommand;
-            }
-        }
-        
-        $command = $registry->get($helpCommandName);
+        $command = $registry->get($argv[2]);
         if ($command) {
             $command->help();
         } else {
@@ -82,16 +73,6 @@ if ($commandName == 'help' || $commandName == '-h' || $commandName == '--help') 
         $registry->showHelp();
     }
     exit(0);
-}
-
-// Handle generate command (special case for two-word commands)
-if ($commandName == 'g' || $commandName == 'generate') {
-    if (isset($argv[2])) {
-        $subCommand = $argv[2];
-        if ($subCommand == 'crud' || $subCommand == 'migration') {
-            $commandName = $commandName . ' ' . $subCommand;
-        }
-    }
 }
 
 // Dispatch the command

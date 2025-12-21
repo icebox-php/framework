@@ -12,7 +12,7 @@ class GenerateMigrationCommand extends BaseCommand
 {
     public function getName(): string
     {
-        return 'generate migration';
+        return 'generate:migration';
     }
 
     public function getDescription(): string
@@ -48,10 +48,10 @@ class GenerateMigrationCommand extends BaseCommand
     public function help(): void
     {
         echo "Usage:\n";
-        echo "  php icebox generate migration <name> [columns]\n\n";
+        echo "  php icebox generate:migration <name> [columns]\n\n";
         echo "Examples:\n";
-        echo "  php icebox generate migration create_posts_table\n";
-        echo "  php icebox generate migration create_posts_table title:string content:text\n";
-        echo "  php icebox generate migration add_user_id_to_posts user_id:integer\n";
+        echo "  php icebox generate:migration create_posts_table\n";
+        echo "  php icebox generate:migration create_posts_table title:string content:text\n";
+        echo "  php icebox generate:migration add_user_id_to_posts user_id:integer\n";
     }
 }

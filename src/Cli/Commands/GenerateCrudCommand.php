@@ -13,7 +13,7 @@ class GenerateCrudCommand extends BaseCommand
 {
     public function getName(): string
     {
-        return 'generate crud';
+        return 'generate:crud';
     }
 
     public function getDescription(): string
@@ -58,10 +58,10 @@ class GenerateCrudCommand extends BaseCommand
     public function help(): void
     {
         echo "Usage:\n";
-        echo "  php icebox generate crud <name> [attributes]\n\n";
+        echo "  php icebox generate:crud <name> [attributes]\n\n";
         echo "Examples:\n";
-        echo "  php icebox generate crud post title:string content:text\n";
-        echo "  php icebox generate crud user name:string email:string password:string\n";
+        echo "  php icebox generate:crud post title:string content:text\n";
+        echo "  php icebox generate:crud user name:string email:string password:string\n";
     }
 
     private function createController(string $controllerName, string $modelName, string $singular, string $plural, array $attrs): void
