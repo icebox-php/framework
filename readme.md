@@ -245,7 +245,7 @@ Icebox includes a simple, Rails-like logger built on Monolog with PSR-3 compatib
 use Icebox\Log;
 
 // Add handlers (no default handlers - you must add at least one)
-Log::addFileHandler('storage/logs/app.log');
+Log::addFileHandler('log/development.log');
 Log::addStdoutHandler(); // For CLI output
 
 // Log messages
@@ -262,7 +262,7 @@ Log::debug('Processing request', ['method' => 'GET']);
 ### 1. File Handler (with rotation)
 ```php
 Log::addFileHandler(
-    'storage/logs/app.log',  // path
+    'log/development.log',  // path
     'debug',                 // level (optional, default: debug)
     7                        // max files to keep (optional, default: 7)
 );
@@ -308,12 +308,12 @@ Log::addClosureHandler(function($log) {
 
 ```php
 // Development setup
-Log::addFileHandler('storage/logs/development.log');
+Log::addFileHandler('log/development.log');
 Log::addStdoutHandler();
 
 // Production setup
-Log::addFileHandler('storage/logs/production.log', 'info');
-Log::addSyslogHandler('myapp-prod', LOG_USER, 'error');
+Log::addFileHandler('log/production.log', 'info');
+Log::addSyslogHandler('myapp-prod', 'error', LOG_USER);
 Log::addClosureHandler(function($log) {
     // Send critical errors to monitoring
     if (in_array($log->level, ['error', 'critical', 'alert', 'emergency'])) {

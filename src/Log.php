@@ -16,7 +16,7 @@ use Psr\Log\LogLevel;
  * 
  * Usage:
  *   // Add handlers (no default handlers)
- *   Icebox\Log::addFileHandler('storage/logs/app.log');
+ *   Icebox\Log::addFileHandler('log/development.log'); // Creates dated files: app-2025-12-21.log
  *   Icebox\Log::addStdoutHandler();
  *   Icebox\Log::addSyslogHandler('myapp');
  *   Icebox\Log::addClosureHandler(function($log) {
@@ -92,9 +92,9 @@ class Log
     }
 
     /**
-     * Add a file handler with rotation
+     * Add a file handler with rotation (creates dated files like app-2025-12-21.log)
      * 
-     * @param string $path Log file path
+     * @param string $path Log file path (e.g., 'log/development.log')
      * @param string $level Log level (debug, info, warning, error, etc.)
      * @param int $maxFiles Maximum number of files to keep (default: 7)
      * @return void
