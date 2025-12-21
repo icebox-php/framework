@@ -103,6 +103,7 @@ function cli_show_main_help() {
   echo "  php icebox console\n";
   echo "  php icebox c\n";
   echo "  php icebox server\n";
+  echo "  php icebox serve\n";
   echo "  php icebox s\n";
   echo "\n";
 
@@ -151,6 +152,7 @@ function cli_show_specific_help_console() {
 function cli_show_specific_help_server() {
   echo "Usage:\n";
   echo "  php icebox server [options]\n";
+  echo "  php icebox serve [options]\n";
   echo "  php icebox s [options]\n\n";
   echo "Start PHP built-in web server with document root set to 'public' directory.\n";
   echo "The server runs on http://localhost:8000 by default.\n";
@@ -161,8 +163,10 @@ function cli_show_specific_help_server() {
   echo "\n";
   echo "Examples:\n";
   echo "  php icebox server          # Start the web server with default settings\n";
+  echo "  php icebox serve           # Short alias\n";
   echo "  php icebox s               # Short alias\n";
   echo "  php icebox server -p=8011 --host=localhost\n";
+  echo "  php icebox serve -p=8011 --host=localhost\n";
   echo "  php icebox s --port=8011 -h=localhost\n";
   echo "\n";
   echo "Note: The server will look for a 'public' directory in the current working directory.\n";
@@ -177,7 +181,7 @@ function cli_show_specific_help($args) {
     cli_show_specific_help_test();
   } else if($args[2] == 'console' || $args[2] == 'c') {
     cli_show_specific_help_console();
-  } else if($args[2] == 'server' || $args[2] == 's') {
+  } else if($args[2] == 'server' || $args[2] == 'serve' || $args[2] == 's') {
     cli_show_specific_help_server();
   }
 }
@@ -650,7 +654,7 @@ if(count($argv) == 1) { // no arguments
     cli_run_test($argv);
   } else if($argv[1] == 'console' || $argv[1] == 'c') {
     cli_run_console($argv);
-  } else if($argv[1] == 'server' || $argv[1] == 's') {
+  } else if($argv[1] == 'server' || $argv[1] == 'serve' || $argv[1] == 's') {
     cli_run_server($argv);
   } else {
     echo "Unknown command: {$argv[1]}\n";
