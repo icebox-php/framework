@@ -235,6 +235,130 @@ John Doe
 
 When using the console within an Icebox application, the application bootstrap will handle loading the framework and environment. The console command simply starts PsySH with the development environment.
 
+# Logging
+
+Icebox includes a simple, Rails-like logger built on Monolog with PSR-3 compatibility. The logger supports multiple simultaneous handlers and works for both terminal and web applications.
+
+## Basic Usage
+
+```php
+use Icebox\Log;
+
+// Add handlers (no default handlers - you must add at least one)
+Log::addFileHandler('storage/logs/app.log');
+Log::addStdoutHandler(); // For CLI output
+
+// Log messages
+Log::info('User logged in');
+Log::error('Database connection failed', ['db' => 'primary']);
+Log::debug('Processing request', ['method' => 'GET']);
+
+// All PSR-3 levels are supported:
+// emergency, alert, critical, error, warning, notice, info, debug
+```
+
+## Handler Types
+
+### 1. File Handler (with rotation)
+```php
+Log::addFileHandler(
+    'storage/logs/app.log',  // path
+    'debug',                 // level (optional, default: debug)
+    7                        // max files to keep (optional, default: 7)
+);
+```
+
+### 2. Syslog Handler
+```php
+Log::addSyslogHandler(
+    'myapp',      // ident (optional, default: icebox)
+    LOG_USER,     // facility (optional, default: LOG_USER)
+    'warning'     // level (optional, default: debug)
+);
+```
+
+### 3. Stdout Handler
+```php
+Log::addStdoutHandler(
+    'info'  // level (optional, default: debug)
+);
+// Colorful output in CLI, plain output in web
+```
+
+### 4. Closure/ Broadcast Handler
+```php
+Log::addClosureHandler(function($log) {
+    // $log object contains:
+    // - level: 'debug', 'info', 'warning', 'error', etc.
+    // - message: The log message
+    // - context: Additional context data
+    // - channel: Logger channel name
+    // - datetime: When the log occurred
+    
+    // Send to monitoring services (Sentry, Airbrake, etc.)
+    if ($log->level === 'error') {
+        \Sentry\captureMessage($log->message, $log->context);
+    }
+    
+    // Or send to Slack, email, etc.
+}, 'error');  // level (optional, default: debug)
+```
+
+## Multiple Handlers Simultaneously
+
+```php
+// Development setup
+Log::addFileHandler('storage/logs/development.log');
+Log::addStdoutHandler();
+
+// Production setup
+Log::addFileHandler('storage/logs/production.log', 'info');
+Log::addSyslogHandler('myapp-prod', LOG_USER, 'error');
+Log::addClosureHandler(function($log) {
+    // Send critical errors to monitoring
+    if (in_array($log->level, ['error', 'critical', 'alert', 'emergency'])) {
+        sendToMonitoringService($log);
+    }
+}, 'error');
+```
+
+## Log Levels
+
+Each handler can have its own log level:
+- `debug`: Detailed debug information
+- `info`: Interesting events
+- `notice`: Normal but significant events  
+- `warning`: Exceptional occurrences that are not errors
+- `error`: Runtime errors
+- `critical`: Critical conditions
+- `alert`: Action must be taken immediately
+- `emergency`: System is unusable
+
+## Testing
+
+```php
+use Icebox\Log;
+
+// Clear handlers for testing
+Log::clearHandlers();
+
+// Add test handlers
+Log::addClosureHandler(function($log) {
+    echo "Test log: {$log->level} - {$log->message}\n";
+});
+
+// Check handler count
+echo Log::handlerCount(); // 1
+```
+
+## Notes
+
+- **No default handlers**: Logs are silently ignored until handlers are added
+- **Multiple handlers**: All added handlers receive log messages simultaneously
+- **Web/CLI compatibility**: Works with Apache, Nginx, PHP built-in server, and CLI
+- **PSR-3 compliant**: Interoperable with other PHP logging libraries
+- **Monolog under the hood**: Uses the industry-standard Monolog library
+
 # How to run testsuite
 
 You can run tests using the Icebox CLI:

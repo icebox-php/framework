@@ -27,7 +27,7 @@ tests/db
 .env.*.local
 
 # Logs
-/logs/
+/log/
 *.log
 
 # Temp
