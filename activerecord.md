@@ -7,12 +7,13 @@ Icebox ActiveRecord is a modern PDO-based implementation with Rails-style query 
 ## Table of Contents
 
 1. [Installation & Configuration](#installation--configuration)
-2. [Creating Models](#creating-models)
-3. [Basic CRUD Operations](#basic-crud-operations)
-4. [Query Builder](#query-builder)
-5. [Advanced Queries](#advanced-queries)
-6. [Transactions](#transactions)
-7. [API Reference](#api-reference)
+2. [Command Line Tools](#command-line-tools)
+3. [Creating Models](#creating-models)
+4. [Basic CRUD Operations](#basic-crud-operations)
+5. [Query Builder](#query-builder)
+6. [Advanced Queries](#advanced-queries)
+7. [Transactions](#transactions)
+8. [API Reference](#api-reference)
 
 ## Installation & Configuration
 
@@ -55,6 +56,71 @@ Config::initialize(function() {
         'database' => '/path/to/database.sqlite',
     ];
 });
+```
+
+## Command Line Tools
+
+Icebox provides a command-line interface for common database operations.
+
+### Database Creation
+
+The `db:create` command creates databases from the `DATABASE_URL` environment variable:
+
+```bash
+php icebox db:create
+```
+
+This command:
+- Reads the `DATABASE_URL` from your environment
+- Creates the database if it doesn't exist
+- Supports SQLite, MySQL, and PostgreSQL databases
+
+#### Examples
+
+**SQLite:**
+```bash
+DATABASE_URL=sqlite:/path/to/database.sqlite
+php icebox db:create
+```
+Creates the SQLite database file and any necessary directories.
+
+**MySQL:**
+```bash
+DATABASE_URL=mysql://user:password@localhost:3306/database_name
+php icebox db:create
+```
+Connects to the MySQL server and creates the specified database.
+
+**PostgreSQL:**
+```bash
+DATABASE_URL=pgsql://user:password@localhost:5432/database_name
+php icebox db:create
+```
+Connects to the PostgreSQL server and creates the specified database.
+
+#### Usage Notes
+
+1. **Environment Variable:** The command requires `DATABASE_URL` to be set in your environment.
+2. **Idempotent:** If the database already exists, the command will report success without errors.
+3. **Error Handling:** Clear error messages are provided for connection issues, missing permissions, or invalid URLs.
+
+### Other Database Commands
+
+Icebox also provides these database management commands:
+
+- `php icebox db:migrate` - Run pending database migrations
+- `php icebox db:migrate:status` - Show migration status
+- `php icebox db:rollback [steps=N]` - Rollback last N migrations (default: 1)
+- `php icebox db:reset` - Rollback all migrations
+
+### Getting Help
+
+For more information about any command:
+```bash
+php icebox help db:create
+php icebox help db:migrate
+# or
+php icebox --help
 ```
 
 ## Creating Models

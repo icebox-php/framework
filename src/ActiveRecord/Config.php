@@ -152,7 +152,7 @@ class Config
      */
     public static function parseDatabaseUrl($url)
     {   
-        if($url == 'sqlite::memory:') {
+        if(str_starts_with($url, 'sqlite:')) {
             return [
                 'dsn' => $url,
                 'username' => '',

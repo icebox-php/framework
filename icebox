@@ -26,6 +26,7 @@ if (!defined('ROOT_DIR')) {
 use Icebox\ActiveRecord\lib\Utils;
 use Icebox\Generator\MigrationGenerator;
 use Icebox\ActiveRecord\MigrationRunner;
+use Icebox\ActiveRecord\DatabaseCreator;
 // use Icebox\ActiveRecord\Config as ArConfig;
 
 
@@ -76,6 +77,7 @@ function cli_show_main_help() {
   echo "Available Commands:\n";
   echo "  g, generate crud <name> [attributes]  # Generate CRUD resources (controller, model, views)\n";
   echo "  g, generate migration <name> [columns] # Generate database migration\n";
+  echo "  db:create                             # Create database from DATABASE_URL\n";
   echo "  db:migrate                            # Run pending database migrations\n";
   echo "  db:migrate:status                     # Show migration status\n";
   echo "  db:rollback [steps=N]                 # Rollback last N migrations (default: 1)\n";
@@ -93,6 +95,7 @@ function cli_show_main_help() {
   echo "Examples:\n";
   echo "  php icebox generate crud post title:string content:text\n";
   echo "  php icebox generate migration create_posts_table title:string content:text\n";
+  echo "  php icebox db:create\n";
   echo "  php icebox db:migrate\n";
   echo "  php icebox db:migrate:status\n";
   echo "  php icebox db:rollback\n";
@@ -174,6 +177,35 @@ function cli_show_specific_help_server() {
   echo "\n";
 }
 
+function cli_show_specific_help_db_create() {
+  echo "Usage:\n";
+  echo "  php icebox db:create\n\n";
+  echo "Create database from DATABASE_URL environment variable.\n";
+  echo "This command creates the database if it doesn't exist.\n";
+  echo "\n";
+  echo "Supported database drivers:\n";
+  echo "  - SQLite: Creates database file and directories\n";
+  echo "  - MySQL: Creates database on MySQL server\n";
+  echo "  - PostgreSQL: Creates database on PostgreSQL server\n";
+  echo "\n";
+  echo "Examples:\n";
+  echo "  # SQLite\n";
+  echo "  DATABASE_URL=sqlite:/path/to/database.sqlite\n";
+  echo "  php icebox db:create\n";
+  echo "\n";
+  echo "  # MySQL\n";
+  echo "  DATABASE_URL=mysql://user:pass@localhost:3306/database_name\n";
+  echo "  php icebox db:create\n";
+  echo "\n";
+  echo "  # PostgreSQL\n";
+  echo "  DATABASE_URL=pgsql://user:pass@localhost:5432/database_name\n";
+  echo "  php icebox db:create\n";
+  echo "\n";
+  echo "Note: The command reads DATABASE_URL from environment variables.\n";
+  echo "Make sure DATABASE_URL is set before running the command.\n";
+  echo "\n";
+}
+
 function cli_show_specific_help($args) {
   if($args[2] == 'g' || $args[2] == 'generate') {
     cli_show_specific_help_generate($args);
@@ -183,6 +215,8 @@ function cli_show_specific_help($args) {
     cli_show_specific_help_console();
   } else if($args[2] == 'server' || $args[2] == 'serve' || $args[2] == 's') {
     cli_show_specific_help_server();
+  } else if($args[2] == 'db:create') {
+    cli_show_specific_help_db_create();
   }
 }
 
@@ -514,6 +548,36 @@ function cli_run_db_reset() {
     exit(1);
   }
 }
+/* Database creation functions */
+function cli_run_db_create() {
+  echo "Creating database from DATABASE_URL...\n";
+  
+  // Get DATABASE_URL from environment
+  $databaseUrl = Icebox\Utils::env('DATABASE_URL');
+  
+  if (!$databaseUrl) {
+    echo "Error: DATABASE_URL environment variable is not set.\n";
+    echo "Set DATABASE_URL before running this command.\n";
+    echo "Example: DATABASE_URL=sqlite:/path/to/database.sqlite\n";
+    exit(1);
+  }
+  
+  echo "Using DATABASE_URL: " . $databaseUrl . "\n";
+  
+  $result = DatabaseCreator::createDatabase($databaseUrl);
+  
+  if ($result['success']) {
+    echo "✓ " . $result['message'] . "\n";
+    echo "Database created successfully!\n";
+  } else {
+    echo "✗ " . $result['message'] . "\n";
+    echo "Failed to create database.\n";
+    exit(1);
+  }
+}
+
+/* ./Database creation functions */
+
 /* ./Migration runner functions */
 
 function cli_run_test($args) {
@@ -642,6 +706,8 @@ if(count($argv) == 1) { // no arguments
       echo "Option missing\n";
       echo "Try: php icebox -h <command-name>\n";
     }
+  } else if($argv[1] == 'db:create') {
+    cli_run_db_create();
   } else if($argv[1] == 'db:migrate') {
     cli_run_db_migrate();
   } else if($argv[1] == 'db:migrate:status') {
