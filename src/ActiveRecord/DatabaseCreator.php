@@ -110,28 +110,32 @@ class DatabaseCreator
             }
         }
         
-        // Create empty database file
-        if (touch($filePath)) {
-            // Test connection to ensure it's valid
-            try {
-                $pdo = new PDO($dsn);
-                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                $pdo = null; // Close connection
-                
-                return [
-                    'success' => true,
-                    'message' => "SQLite database created at: {$filePath}"
-                ];
-            } catch (PDOException $e) {
-                return [
-                    'success' => false,
-                    'message' => "Created file but failed to connect: " . $e->getMessage()
-                ];
-            }
-        } else {
+        try {
+            // Connect to SQLite (PDO will create the file if it doesn't exist)
+            $pdo = new PDO($dsn);
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            
+            // Create schema_migrations table (same SQL as in MigrationRunner)
+            $sql = "CREATE TABLE IF NOT EXISTS schema_migrations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                migration VARCHAR(255) NOT NULL UNIQUE,
+                executed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )";
+            $pdo->exec($sql);
+            
+            // Close connection (optional)
+            $pdo = null;
+            
+            return [
+                'success' => true,
+                'message' => "SQLite database created at: {$filePath} with schema_migrations table"
+            ];
+        } catch (PDOException $e) {
+            // If creation fails, the file may have been created but is incomplete.
+            // We could attempt to delete it, but leaving it is harmless.
             return [
                 'success' => false,
-                'message' => "Failed to create database file: {$filePath}"
+                'message' => "Failed to create SQLite database: " . $e->getMessage()
             ];
         }
     }
