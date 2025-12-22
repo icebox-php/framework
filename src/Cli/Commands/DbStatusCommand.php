@@ -22,7 +22,9 @@ class DbStatusCommand extends BaseCommand
 
     public function execute(array $args): int
     {
-        $this->info("Migration Status");
+        if ($this->showHelpIfRequested($args)) {
+            return 0;
+        }
         $this->info("================");
         $this->info("");
 

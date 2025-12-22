@@ -21,9 +21,9 @@ class ServerCommand extends BaseCommand
 
     public function execute(array $args): int
     {
-        $host = 'localhost';
-        $port = '8000';
-
+        if ($this->showHelpIfRequested($args)) {
+            return 0;
+        }
         // Parse command line arguments
         foreach ($args as $key => $arg) {
             if (strpos($arg, '-p=') === 0 || strpos($arg, '--port=') === 0) {

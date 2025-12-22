@@ -23,6 +23,10 @@ class GenerateCrudCommand extends BaseCommand
 
     public function execute(array $args): int
     {
+        if ($this->showHelpIfRequested($args)) {
+            return 0;
+        }
+
         if (!isset($args[3])) {
             $this->error("Resource name is required");
             $this->help();

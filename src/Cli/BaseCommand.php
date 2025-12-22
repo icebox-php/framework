@@ -67,4 +67,23 @@ abstract class BaseCommand
     {
         echo $message . "\n";
     }
+
+    /**
+     * Check if help is requested in arguments and show help if so
+     *
+     * @param array $args Command arguments
+     * @return bool True if help was shown, false otherwise
+     */
+    protected function showHelpIfRequested(array $args): bool
+    {
+        // Skip script name (index 0) and command name (index 1)
+        $filteredArgs = array_slice($args, 2);
+        
+        if (in_array('--help', $filteredArgs) || in_array('-h', $filteredArgs) || in_array('help', $filteredArgs)) {
+            $this->help();
+            return true;
+        }
+        
+        return false;
+    }
 }

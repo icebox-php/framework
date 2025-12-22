@@ -21,6 +21,10 @@ class ConsoleCommand extends BaseCommand
 
     public function execute(array $args): int
     {
+        if ($this->showHelpIfRequested($args)) {
+            return 0;
+        }
+
         // Check if PsySH is available
         $psysh = 'vendor/bin/psysh';
         if (!file_exists($psysh)) {

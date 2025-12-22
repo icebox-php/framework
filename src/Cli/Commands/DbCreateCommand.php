@@ -23,6 +23,9 @@ class DbCreateCommand extends BaseCommand
 
     public function execute(array $args): int
     {
+        if ($this->showHelpIfRequested($args)) {
+            return 0;
+        }
         $this->info("Creating database from DATABASE_URL...");
 
         // Get DATABASE_URL from environment

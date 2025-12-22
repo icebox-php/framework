@@ -22,7 +22,9 @@ class DbRollbackCommand extends BaseCommand
 
     public function execute(array $args): int
     {
-        $steps = 1;
+        if ($this->showHelpIfRequested($args)) {
+            return 0;
+        }
 
         // Parse steps parameter
         foreach ($args as $arg) {

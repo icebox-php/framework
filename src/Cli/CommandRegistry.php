@@ -132,12 +132,16 @@ class CommandRegistry
         echo "\n";
 
         echo "Options:\n";
-        echo "  -h, --help, help         # Show this help message and quit\n";
-        echo "  help <command>           # Show help for a specific command\n";
+        echo "  -h, --help, help             # Show this help message and quit\n";
+        echo "  -h, --help, help <command>   # Show help for a specific command\n";
+        echo "                               # Example: php icebox help db:create\n";
+        echo " <command> -h, --help, help    # Alias: Show help for a specific command\n";
+        echo "                               # Example: php icebox db:create help\n";
         echo "\n";
 
         echo "For more information about a command, use:\n";
         echo "  php icebox help <command>\n";
+        echo "  php icebox <command> help\n";
         echo "\n";
     }
 

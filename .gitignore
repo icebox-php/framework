@@ -33,6 +33,9 @@ tests/db
 # Temp
 /tmp/
 
+# Ignore sqlite datbase files
+db/*.sqlite
+
 # Test files
 test_*.php
 tests/db/migrations/

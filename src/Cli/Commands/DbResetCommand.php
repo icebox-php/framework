@@ -22,7 +22,9 @@ class DbResetCommand extends BaseCommand
 
     public function execute(array $args): int
     {
-        $this->info("Rolling back all migrations...");
+        if ($this->showHelpIfRequested($args)) {
+            return 0;
+        }
 
         try {
             $runner = new MigrationRunner();
