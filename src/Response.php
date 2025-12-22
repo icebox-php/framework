@@ -109,4 +109,14 @@ class Response {
       }
       return '';
     }
-}
+
+    /**
+     * Get the status code of this response.
+     *
+     * @return int
+     */
+    public function getStatusCode(): int
+    {
+        return $this->status_code;
+    }
+  }

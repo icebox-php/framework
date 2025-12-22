@@ -239,6 +239,21 @@ When using the console within an Icebox application, the application bootstrap w
 
 Icebox includes a simple, Rails-like logger built on Monolog with PSR-3 compatibility. The logger supports multiple simultaneous handlers and works for both terminal and web applications.
 
+## Request Logging
+
+When running the development server (`php icebox server`), Icebox automatically suppresses the default PHP built‑in server logs and provides Rails‑style request logging:
+
+```
+PHP server logs suppressed. Application logs will appear below.
+
+[2025-12-22T21:46:56.957795+00:00] icebox - INFO - 35e0ee Started GET "/posts" for 127.0.0.1 at 2025‑12‑22 23:46:30 +0000
+[2025-12-22T21:46:56.957795+00:00] icebox - INFO - 35e0ee Processing by PostsController#index as HTML
+[2025-12-22T21:46:56.957795+00:00] icebox - INFO - 35e0ee Completed 200 OK in 12ms
+```
+
+Each request receives a unique request id, 
+timestamps should be in UTC (need more testing to check, Log use what timestamp). 
+
 ## Basic Usage
 
 ```php
