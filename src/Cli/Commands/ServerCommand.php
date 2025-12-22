@@ -24,7 +24,12 @@ class ServerCommand extends BaseCommand
         if ($this->showHelpIfRequested($args)) {
             return 0;
         }
-        // Parse command line arguments
+
+        # $host and $port default value
+        $host = 'localhost';
+        $port = '8800';
+
+        # Parse command line arguments
         foreach ($args as $key => $arg) {
             if (strpos($arg, '-p=') === 0 || strpos($arg, '--port=') === 0) {
                 $port = substr($arg, strpos($arg, '=') + 1);
@@ -35,7 +40,7 @@ class ServerCommand extends BaseCommand
             }
         }
 
-        // Re-index the array after unsetting elements
+        # Re-index the array after unsetting elements
         $args = array_values($args);
 
         $this->info("Starting PHP built-in web server...");
@@ -46,17 +51,17 @@ class ServerCommand extends BaseCommand
 
         $publicDir = ROOT_DIR . '/public';
 
-        // Check if public directory exists
+        # Check if public directory exists
         if (!is_dir($publicDir)) {
             $this->info("Warning: 'public' directory not found in current working directory.");
             $this->info("The server may not work correctly.");
             $this->info("");
         }
 
-        // Build the command
+        # Build the command
         $command = "php -S $host:$port -t " . $publicDir;
 
-        // Pass through any additional arguments (e.g., for router script)
+        # Pass through any additional arguments (e.g., for router script)
         if (count($args) > 2) {
             for ($i = 2; $i < count($args); $i++) {
                 $command .= ' ' . escapeshellarg($args[$i]);
