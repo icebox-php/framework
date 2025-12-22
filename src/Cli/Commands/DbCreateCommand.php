@@ -44,7 +44,7 @@ class DbCreateCommand extends BaseCommand
 
         if ($result['success']) {
             $this->success($result['message']);
-            $this->success("Database created successfully!");
+            $this->success("Completed db:create command!");
             return 0;
         } else {
             $this->error($result['message']);
