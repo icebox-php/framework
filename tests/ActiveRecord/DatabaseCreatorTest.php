@@ -28,9 +28,8 @@ class DatabaseCreatorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
-        // Create a temporary directory for SQLite files
-        $this->tempDir = sys_get_temp_dir() . '/icebox_test_' . uniqid();
+        // Create a temporary directory for SQLite files inside the project
+        $this->tempDir = dirname(__DIR__) . '/tmp/icebox_test_' . uniqid();
         if (!is_dir($this->tempDir)) {
             mkdir($this->tempDir, 0755, true);
         }
@@ -43,17 +42,22 @@ class DatabaseCreatorTest extends TestCase
 
     protected function tearDown(): void
     {
-        // Clean up temporary files
-        foreach ($this->tempFiles as $file) {
-            if (file_exists($file)) {
-                unlink($file);
-            }
-        }
+        // // Clean up temporary files
+        // foreach ($this->tempFiles as $file) {
+        //     if (file_exists($file)) {
+        //         if (is_dir($file)) {
+        //             rmdir($file);
+        //         } else {
+        //             unlink($file);
+        //         }
+        //     }
+        // }
         
-        // Remove temporary directory if empty
-        if (is_dir($this->tempDir)) {
-            @rmdir($this->tempDir);
-        }
+        // Delete temporary directory
+        $this->deleteDir($this->tempDir);
+        // if (is_dir($this->tempDir)) {
+        //     rmdir($this->tempDir);
+        // }
         
         // Close any connection opened during tests
         if (Config::isInitialized()) {
@@ -66,10 +70,10 @@ class DatabaseCreatorTest extends TestCase
     /**
      * Create a temporary SQLite file path
      */
-    private function createTempSqlitePath(string $suffix = ''): string
+    private function generateTempSqlitePath(string $suffix = ''): string
     {
         $path = $this->tempDir . '/testdb_' . uniqid() . $suffix . '.sqlite';
-        $this->tempFiles[] = $path;
+        // $this->tempFiles[] = $path;
         return $path;
     }
 
@@ -78,7 +82,7 @@ class DatabaseCreatorTest extends TestCase
      */
     public function testCreateDatabaseSqliteNewFile(): void
     {
-        $filePath = $this->createTempSqlitePath();
+        $filePath = $this->generateTempSqlitePath();
         $dsn = 'sqlite:' . $filePath;
         
         $result = DatabaseCreator::createDatabase($dsn);
@@ -104,7 +108,7 @@ class DatabaseCreatorTest extends TestCase
      */
     public function testCreateDatabaseSqliteExistingFile(): void
     {
-        $filePath = $this->createTempSqlitePath();
+        $filePath = $this->generateTempSqlitePath();
         $dsn = 'sqlite:' . $filePath;
         
         // Create the file first
@@ -193,7 +197,7 @@ class DatabaseCreatorTest extends TestCase
     public function testCreateDatabaseSqlitePdoException(): void
     {
         // Create a directory that will cause PDO to fail (e.g., a directory instead of a file)
-        $dirPath = $this->createTempSqlitePath();
+        $dirPath = $this->generateTempSqlitePath();
         mkdir($dirPath, 0755); // Now it's a directory
         
         $dsn = 'sqlite:' . $dirPath;
@@ -212,7 +216,7 @@ class DatabaseCreatorTest extends TestCase
      */
     public function testDatabaseExistsSqliteFileExists(): void
     {
-        $filePath = $this->createTempSqlitePath();
+        $filePath = $this->generateTempSqlitePath();
         touch($filePath);
         $dsn = 'sqlite:' . $filePath;
         
@@ -224,7 +228,7 @@ class DatabaseCreatorTest extends TestCase
      */
     public function testDatabaseExistsSqliteFileNotExists(): void
     {
-        $filePath = $this->createTempSqlitePath();
+        $filePath = $this->generateTempSqlitePath();
         $dsn = 'sqlite:' . $filePath;
         
         $this->assertFalse(DatabaseCreator::databaseExists($dsn));
@@ -305,21 +309,21 @@ class DatabaseCreatorTest extends TestCase
      * This test mocks the PDO class to simulate MySQL database creation
      * without requiring an actual MySQL server.
      */
-    public function testCreateDatabaseMySqlMocked(): void
-    {
-        // We cannot easily mock PDO because DatabaseCreator creates it internally.
-        // Instead, we'll skip this test for now and rely on integration tests for SQLite.
-        // We'll mark it as skipped with a clear message.
-        $this->markTestSkipped('MySQL unit tests require refactoring to inject PDO dependencies');
-    }
+    // public function testCreateDatabaseMySqlMocked(): void
+    // {
+    //     // We cannot easily mock PDO because DatabaseCreator creates it internally.
+    //     // Instead, we'll skip this test for now and rely on integration tests for SQLite.
+    //     // We'll mark it as skipped with a clear message.
+    //     $this->markTestSkipped('MySQL unit tests require refactoring to inject PDO dependencies');
+    // }
 
     /**
      * Test createDatabase with PostgreSQL using mocked PDO
      */
-    public function testCreateDatabasePostgreSqlMocked(): void
-    {
-        $this->markTestSkipped('PostgreSQL unit tests require refactoring to inject PDO dependencies');
-    }
+    // public function testCreateDatabasePostgreSqlMocked(): void
+    // {
+    //     $this->markTestSkipped('PostgreSQL unit tests require refactoring to inject PDO dependencies');
+    // }
 
     /**
      * Test that Config::parseDatabaseUrl is called correctly
@@ -329,6 +333,25 @@ class DatabaseCreatorTest extends TestCase
     {
         // This is already covered by the invalid URL test
         $this->assertTrue(true);
+    }
+
+    private function deleteDir($dir) {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $files = scandir($dir);
+        foreach ($files as $file) {
+            if ($file != '.' && $file != '..') {
+                $path = $dir . DIRECTORY_SEPARATOR . $file;
+                if (is_dir($path)) {
+                    $this->deleteDir($path);
+                } else {
+                    unlink($path);
+                }
+            }
+        }
+        rmdir($dir);
     }
 
     /**

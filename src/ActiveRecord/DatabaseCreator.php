@@ -102,7 +102,7 @@ class DatabaseCreator
         // Create directory if needed
         $dir = dirname($filePath);
         if (!is_dir($dir)) {
-            if (!mkdir($dir, 0755, true)) {
+            if (!@mkdir($dir, 0755, true)) {
                 return [
                     'success' => false,
                     'message' => "Failed to create directory: {$dir}"
