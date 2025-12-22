@@ -203,6 +203,7 @@ class LogTest extends TestCase
         $reflection = new \ReflectionClass(Log::class);
         $method = $reflection->getMethod('normalizeLevel');
         if (PHP_VERSION_ID < 80100) {
+            /** @disregard intelephense(P1007) 'setAccessible' is deprecated. */
           $method->setAccessible(true);
         }
         

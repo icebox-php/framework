@@ -68,6 +68,7 @@ abstract class TestCase extends PHPUnitTestCase
         $reflection = new \ReflectionClass($object);
         $method = $reflection->getMethod($methodName);
         if (PHP_VERSION_ID < 80100) {
+            /** @disregard intelephense(P1007) 'setAccessible' is deprecated. */
             $method->setAccessible(true);
         }
         return $method;
@@ -81,6 +82,7 @@ abstract class TestCase extends PHPUnitTestCase
         $reflection = new \ReflectionClass($object);
         $property = $reflection->getProperty($propertyName);
         if (PHP_VERSION_ID < 80100) {
+            /** @disregard intelephense(P1007) 'setAccessible' is deprecated. */
             $property->setAccessible(true);
         }
         return $property;

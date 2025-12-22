@@ -74,6 +74,8 @@ This command:
 - Reads the `DATABASE_URL` from your environment
 - Creates the database if it doesn't exist
 - Supports SQLite, MySQL, and PostgreSQL databases
+- For SQLite, creates the database file and the `schema_migrations` table
+- For MySQL/PostgreSQL, connects to the server and creates the database
 
 #### Examples
 
@@ -82,27 +84,51 @@ This command:
 DATABASE_URL=sqlite:/path/to/database.sqlite
 php icebox db:create
 ```
-Creates the SQLite database file and any necessary directories.
+Creates the SQLite database file (including parent directories if needed) and initializes the `schema_migrations` table.
+
+**SQLite in-memory:**
+```bash
+DATABASE_URL=sqlite::memory:
+php icebox db:create
+```
+Reports success (in-memory databases are ready immediately).
 
 **MySQL:**
 ```bash
 DATABASE_URL=mysql://user:password@localhost:3306/database_name
 php icebox db:create
 ```
-Connects to the MySQL server and creates the specified database.
+Connects to the MySQL server and creates the specified database with UTF8MB4 charset.
 
 **PostgreSQL:**
 ```bash
 DATABASE_URL=pgsql://user:password@localhost:5432/database_name
 php icebox db:create
 ```
-Connects to the PostgreSQL server and creates the specified database.
+Connects to the PostgreSQL server and creates the specified database with UTF8 encoding.
 
 #### Usage Notes
 
 1. **Environment Variable:** The command requires `DATABASE_URL` to be set in your environment.
 2. **Idempotent:** If the database already exists, the command will report success without errors.
 3. **Error Handling:** Clear error messages are provided for connection issues, missing permissions, or invalid URLs.
+4. **SQLite Specifics:** The created SQLite database includes a `schema_migrations` table for migration tracking.
+5. **Unsupported Drivers:** If an unsupported driver is specified (e.g., `oracle:`), the command will report an error.
+
+#### Testing
+
+The `DatabaseCreator` class is thoroughly tested. Run the tests with:
+
+```bash
+php vendor/bin/phpunit tests/ActiveRecord/DatabaseCreatorTest.php
+```
+
+Tests cover:
+- SQLite file creation (new, existing, in‑memory)
+- Directory creation and permission failures
+- Invalid URLs and unsupported drivers
+- Private helper methods (`extractDriverFromDsn`, `extractDatabaseNameFromDsn`, `createServerDsn`)
+- `databaseExists` method
 
 ### Other Database Commands
 
