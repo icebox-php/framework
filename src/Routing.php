@@ -39,25 +39,27 @@ class Routing
 
     public function url_matcher()
     {
-        $uri = '';
+        // $uri = '';
 
-        $request_uri = trim($_SERVER['REQUEST_URI'], '/'); // remove trailing and leading slash
-        $project_directory = trim(App::project_directory(), '/'); // remove trailing and leading slash
-        $index_file = '/' . App::index_file();
+        // $request_uri = trim($_SERVER['REQUEST_URI'], '/'); // remove trailing and leading slash
+        // $project_directory = trim(App::project_directory(), '/'); // remove trailing and leading slash
+        // $index_file = '/' . App::index_file();
 
-        // remove get parameters
-        $parts = explode('?', $request_uri, 2);
-        $request_uri = $parts[0];
+        // // remove get parameters
+        // $parts = explode('?', $request_uri, 2);
+        // $request_uri = $parts[0];
 
-        // remove project_directory if project is in subfolder
-        // if $uri = '/ice-box/leap_year/2012', you need to get '/leap_year/2012'
-        $find = strpos($request_uri, $project_directory);
-        if ($find === 0) { $uri = substr($request_uri, strlen($project_directory)); }
+        // // remove project_directory if project is in subfolder
+        // // if $uri = '/ice-box/leap_year/2012', you need to get '/leap_year/2012'
+        // $find = strpos($request_uri, $project_directory);
+        // if ($find === 0) { $uri = substr($request_uri, strlen($project_directory)); }
 
-        // remove /index.php if you request a page like this: http://localhost/ice-box/index.php/posts
-        // if $uri = '/index.php/posts', you need to get '/posts'
-        $find = strpos($uri, $index_file);
-        if ($find === 0) { $uri = substr($uri, strlen($index_file)); }
+        // // remove /index.php if you request a page like this: http://localhost/ice-box/index.php/posts
+        // // if $uri = '/index.php/posts', you need to get '/posts'
+        // $find = strpos($uri, $index_file);
+        // if ($find === 0) { $uri = substr($uri, strlen($index_file)); }
+
+        $uri = $_SERVER['REQUEST_URI'];
 
         // remove leading slash
         // if $url = '/posts/5', I need 'posts/5'

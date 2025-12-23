@@ -9,8 +9,8 @@ use ErrorException;
 use Exception;
 use Error;
 
-if (!defined('WARNING')) { define('WARNING', false); }
-if (!defined('DEBUG')) { define('DEBUG', false); }
+// if (!defined('WARNING')) { define('WARNING', false); }
+// if (!defined('DEBUG')) { define('DEBUG', false); }
 
 class App {
     public static $controller_namespace  = 'App\Controller\\';
@@ -33,6 +33,8 @@ class App {
 
     private static $url_prefix; // http or, https
 
+    protected static ?string $basePath = null;
+
     /*
     If your project is in subfolder set it here. It will be used in url
     $project_directory = '/ice-box'; # root_url() will be like: http://localhost/ice-box
@@ -42,31 +44,45 @@ class App {
     you do not need to send $index_page parameter
     $index_page parameter has effect on App::url() function
     */
-    public function __construct($file, $project_directory = '')
+    // public function __construct($basePath)
+    // {
+    //   self::setBasePath($basePath);
+    //   // self::catch_warning_error();
+
+    //   // $dir = dirname($file);
+    //   // $index_file = basename($file);
+
+    //   // self::set_index_file($index_file);
+    //   // self::set_file($dir);
+    //  // self::set_project_directory($project_directory);
+    //  // self::set_url_prefix();
+    //  // $root_url = self::set_root_url($project_directory);
+    //  // self::set_url($root_url, $index_file);
+    //  // self::init_active_record();
+    // }
+
+    // public static function catch_warning_error() {
+    //   if(defined('WARNING') && \WARNING == true) {
+    //     set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    //       if (!(error_reporting() & $errno)) {
+    //         return;
+    //       }
+    //       throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+    //     });
+    //   }
+    // }
+
+    public static function setBasePath(string $path): void
     {
-      self::catch_warning_error();
-
-      $dir = dirname($file);
-      $index_file = basename($file);
-
-      self::set_index_file($index_file);
-      self::set_file($dir);
-      self::set_project_directory($project_directory);
-      self::set_url_prefix();
-      $root_url = self::set_root_url($project_directory);
-      self::set_url($root_url, $index_file);
-      self::init_active_record();
+        if (self::$basePath !== null) {
+            throw new \LogicException('Base path already set.');
+        }
+        self::$basePath = rtrim($path, '/');
     }
 
-    public static function catch_warning_error() {
-      if(defined('WARNING') && WARNING == true) {
-        set_error_handler(function($errno, $errstr, $errfile, $errline) {
-          if (!(error_reporting() & $errno)) {
-            return;
-          }
-          throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
-        });
-      }
+    public static function basePath(string $path = ''): string
+    {
+        return self::$basePath . ($path ? '/' . ltrim($path, '/') : '');
     }
 
     public static function file($path) {
@@ -106,91 +122,9 @@ class App {
       return $url_prefix . '://' . self::$url . $prepared_path;
     }
 
-    public function handle($matcher) {
-
-        try {
-
-            if($matcher === false) {
-                throw new ResourceNotFoundException();
-            }
-
-            //==============================================
-
-            $matcher_parts = $this->clip_action($matcher);
-
-            if(method_exists($matcher_parts[0], $matcher_parts[1]) && is_callable($matcher_parts)) {
-
-                // TODO: Call before action
-                // if returned value from any before_action is a "Response Object" and has response code 301 or 302
-                // return this response object
-
-                $response = call_user_func($matcher_parts);
-                if($response === null) { throw new \Exception('"May be, you forgot to \'return $this->render()\' from controller::action"'); }
-
-                // TODO: Call after action
-
-                return $response;
-            } else {
-                throw new \Exception(
-                  sprintf(
-                    "Can not call %sController::%s. Please check if this function exists, or the function is public",
-                    App::$controller, App::$action
-                  )
-                );
-            }
-
-        } catch (ResourceNotFoundException $e) {
-
-            return new Response('Not Found', 404);
-
-        } catch(ErrorException $e) {
-            $msg = '';
-
-            if(defined('DEBUG') && DEBUG == true) {
-              $msg .= "ErrorException: ".$e->getMessage();
-              $msg .= "\n<br>\n";
-              $msg .= Debug::details($e);
-            } else {
-              $msg = 'An error occurred';
-            }
-
-            // Debug::details($e);
-
-            return new Response($msg, 500);
-        } catch (Exception $e) {
-
-          $msg = '';
-
-          if(defined('DEBUG') && DEBUG == true) {
-            $msg .= "Exception: ".$e->getMessage();
-            $msg .= "\n<br>\n";
-            $msg .= Debug::details($e);
-          } else {
-            $msg = 'An error occurred';
-          }
-
-          return new Response($msg, 500);
-
-        } catch(Error $e) {
-          $msg = '';
-
-          if(defined('DEBUG') && DEBUG == true) {
-            $msg .= "Error: ".$e->getMessage();
-            $msg .= "\n<br>\n";
-            $msg .= Debug::details($e);
-          } else {
-            $msg = 'An error occurred';
-          }
-          return new Response($msg, 500);
-        } finally {
-            restore_error_handler();
-        }
-
-    }
-
-    public static function view_root() {
-       return dirname(self::$file) . '/app/View';
-    }
+    // public static function view_root() {
+    //   self::basePath('/app/View');
+    // }
 
     public static function is_https_connection() {
       return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off');
@@ -228,24 +162,12 @@ class App {
       self::$url = $root_url . '/' . $index_page;
     }
 
-    private static function init_active_record() {
-      // $capsule = new \Illuminate\Database\Capsule\Manager;
-      // $config = include(self::file('Config', 'database.php'));
-      // $capsule->addConnection($config);
-      // $capsule->bootEloquent();
-    }
-
-    private function clip_action($matcher) {
-        $parts = explode('::', $matcher);
-
-        App::$controller = $parts[0];
-        App::$action = $parts[1];
-
-        $controller = App::$controller_namespace . $parts[0] . 'Controller';
-        $action = $parts[1];
-
-        return array(new $controller, $action);
-    }
+    // private static function init_active_record() {
+    //   // $capsule = new \Illuminate\Database\Capsule\Manager;
+    //   // $config = include(self::file('Config', 'database.php'));
+    //   // $capsule->addConnection($config);
+    //   // $capsule->bootEloquent();
+    // }
 
     private static function append_params_to_path($path = '', Array $params = []) {
         if(strpos($path, ':') == false) { return $path; }

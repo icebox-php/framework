@@ -32,12 +32,12 @@ class Controller {
     }
 
 
-    // if first character is slash: load from Framework::view_root()/$view
-    // if first character is not slash: load from Framework::view_root()/controller/$view
+    // if first character is slash: load from app/view
+    // if first character is not slash: load from app/view/$controller_name
     if($_view[0] == '/') {
-      $_view_file = App::view_root() . $_view . '.html.php';
+      $_view_file = App::basePath("app/View/{$_view}.html.php");
     } else {
-      $_view_file = App::view_root() . DIRECTORY_SEPARATOR . $this->_controller . DIRECTORY_SEPARATOR . $_view . '.html.php';
+      $_view_file = App::basePath("app/View/{$this->_controller}/{$_view}.html.php");
     }
 
 
@@ -57,7 +57,7 @@ class Controller {
         return new Response($this->_content['content'], $this->status, $this->headers);
       } else {
         ob_start();
-        include(App::view_root() . DIRECTORY_SEPARATOR . 'Layout' . DIRECTORY_SEPARATOR . $this->layout . '.html.php');
+        include(App::basePath("app/View/Layout/{$this->layout}.html.php"));
         return new Response(ob_get_clean(), $this->status, $this->headers);
       }
 
