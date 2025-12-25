@@ -142,7 +142,7 @@ class Log
         // Colorful output for CLI
         if (php_sapi_name() === 'cli' || php_sapi_name() === 'phpdbg') {
             $formatter = new LineFormatter(
-                "[%datetime%] %channel% - %level_name% - %message%\n",
+                "%datetime% %channel% - %level_name% - %message%\n",
                 'Y-m-d\TH:i:s.uP',
                 true,
                 true
@@ -231,7 +231,7 @@ class Log
     private static function createLineFormatter(): LineFormatter
     {
         return new LineFormatter(
-            "[%datetime%] %channel% - %level_name% - %message%\n",
+            "%datetime% %channel% - %level_name% - %message%\n",
             'Y-m-d\TH:i:s.uP', //'Y-m-d H:i:s'
         );
     }
