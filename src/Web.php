@@ -10,7 +10,7 @@ use Error;
 /**
  * Web request handler
  *
- * Encapsulates Rails‑style request logging, route matching, controller dispatch,
+ * Encapsulates request logging, route matching, controller dispatch,
  * and response sending. Intended to be used from the application's public/index.php.
  */
 class Web
