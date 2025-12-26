@@ -3,6 +3,7 @@
 namespace Icebox\Cli\Commands;
 
 use Icebox\Cli\BaseCommand;
+use Icebox\App;
 
 /**
  * Command to start PHP built-in web server
@@ -49,7 +50,7 @@ class ServerCommand extends BaseCommand
         $this->info("Press Ctrl+C to stop the server");
         $this->info("");
 
-        $publicDir = ROOT_DIR . '/public';
+        $publicDir = App::basePath('public');
 
         # Check if public directory exists
         if (!is_dir($publicDir)) {
@@ -81,9 +82,9 @@ class ServerCommand extends BaseCommand
         echo "  php icebox serve [options]\n";
         echo "  php icebox s [options]\n\n";
         echo "Start PHP built-in web server with document root set to 'public' directory.\n";
-        echo "The server runs on http://localhost:8000 by default.\n\n";
+        echo "The server runs on http://localhost:8800 by default.\n\n";
         echo "Options:\n";
-        echo "  -p, --port=PORT      Set the port number (default: 8000)\n";
+        echo "  -p, --port=PORT      Set the port number (default: 8800)\n";
         echo "  -h, --host=HOST      Set the host address (default: localhost)\n\n";
         echo "Examples:\n";
         echo "  php icebox server          # Start the web server with default settings\n";

@@ -246,9 +246,9 @@ When running the development server (`php icebox server`), Icebox automatically 
 ```
 PHP server logs suppressed. Application logs will appear below.
 
-[2025-12-22T21:46:56.957795+00:00] icebox - INFO - 35e0ee Started GET "/posts" for 127.0.0.1 at 2025‑12‑22 23:46:30 +0000
-[2025-12-22T21:46:56.957795+00:00] icebox - INFO - 35e0ee Processing by PostsController#index as HTML
-[2025-12-22T21:46:56.957795+00:00] icebox - INFO - 35e0ee Completed 200 OK in 12ms
+2025-12-22T21:46:56.957795+00:00 icebox - INFO - 35e0ee Started GET "/posts" for 127.0.0.1 at 2025‑12‑22 23:46:30 +0000
+2025-12-22T21:46:56.957795+00:00 icebox - INFO - 35e0ee Processing by PostsController#index as HTML
+2025-12-22T21:46:56.957795+00:00 icebox - INFO - 35e0ee Completed 200 OK in 12ms
 ```
 
 Each request receives a unique request id, 
