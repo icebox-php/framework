@@ -423,19 +423,21 @@ class Log
     }
 
     public static function requestStart() {
-        $method = $_SERVER['REQUEST_METHOD'] ?? 'CLI';
-        $path = $_SERVER['REQUEST_URI'] ?? '/';
-        $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-        $timestamp = gmdate('Y-m-d H:i:s') . ' +0000';
+        if(Config::get('log_request_start', true) == true) {
+            $method = $_SERVER['REQUEST_METHOD'] ?? 'CLI';
+            $path = $_SERVER['REQUEST_URI'] ?? '/';
+            $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+            $timestamp = gmdate('Y-m-d H:i:s') . ' +0000';
 
-        Log::forceInfo(sprintf(
-            '%s Started %s "%s" for %s at %s',
-            self::getRequestId(),
-            strtoupper($method),
-            $path,
-            $clientIp,
-            $timestamp
-        ));
+            Log::forceInfo(sprintf(
+                '%s Started %s "%s" for %s at %s',
+                self::getRequestId(),
+                strtoupper($method),
+                $path,
+                $clientIp,
+                $timestamp
+            ));
+        }
     }
 
     /**
