@@ -46,23 +46,11 @@ class Web
         $routes = include App::basePath('/config/routes.php');
         $matcher = $routes->url_matcher();
 
-        $requestId = self::generateRequestId();
+        $requestId = Log::getRequestId();
         $startTime = microtime(true);
 
         // Log request start
-        $method = $_SERVER['REQUEST_METHOD'] ?? 'CLI';
-        $path = $_SERVER['REQUEST_URI'] ?? '/';
-        $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-        $timestamp = gmdate('Y-m-d H:i:s') . ' +0000';
-
-        Log::info(sprintf(
-            '%s Started %s "%s" for %s at %s',
-            $requestId,
-            strtoupper($method),
-            $path,
-            $clientIp,
-            $timestamp
-        ));
+        Log::requestStart();
 
         // Determine controller/action for logging
         $controllerAction = 'Unknown';
@@ -191,16 +179,5 @@ class Web
         $action = $parts[1];
 
         return array(new $controller, $action);
-    }
-
-    /**
-     * Generate a short unique request ID.
-     *
-     * @param int $length Number of hex characters (default 6)
-     * @return string
-     */
-    private static function generateRequestId(int $length = 6): string
-    {
-        return bin2hex(random_bytes($length / 2));
     }
 }

@@ -57,6 +57,21 @@ class Log
     private static $handlers = [];
 
     /**
+     * @var string unique Request id in a specific time
+     */
+    private static $requestId = null;
+
+    /**
+     * @var string Default log line format
+     */
+    private const DEFAULT_LINE_FORMAT = '%datetime% %channel% - %level_name% - %message%';
+
+    /**
+     * @var string Default log datetime format
+     */
+    private const DEFAULT_DATETIME_FORMAT = 'Y-m-d\TH:i:s.uP';
+
+    /**
      * @var string Default log channel name
      */
     private const DEFAULT_CHANNEL = 'icebox';
@@ -89,6 +104,23 @@ class Log
         }
         
         return $logger;
+    }
+
+    public static function getRequestId(): string
+    {
+        return self::$requestId ?? self::generateRequestId();
+    }
+
+    /**
+     * Generate a short unique (in a specific time) request ID.
+     *
+     * @param int $length Number of hex characters (default 6)
+     * @return string
+     */
+    private static function generateRequestId(int $length = 6): string
+    {
+        self::$requestId = bin2hex(random_bytes($length / 2));
+        return self::$requestId;
     }
 
     /**
@@ -142,8 +174,8 @@ class Log
         // Colorful output for CLI
         if (php_sapi_name() === 'cli' || php_sapi_name() === 'phpdbg') {
             $formatter = new LineFormatter(
-                "%datetime% %channel% - %level_name% - %message%\n",
-                'Y-m-d\TH:i:s.uP',
+                self::DEFAULT_LINE_FORMAT . "\n",
+                self::DEFAULT_DATETIME_FORMAT,
                 true,
                 true
             );
@@ -231,8 +263,8 @@ class Log
     private static function createLineFormatter(): LineFormatter
     {
         return new LineFormatter(
-            "%datetime% %channel% - %level_name% - %message%\n",
-            'Y-m-d\TH:i:s.uP', //'Y-m-d H:i:s'
+            self::DEFAULT_LINE_FORMAT . "\n",
+            self::DEFAULT_DATETIME_FORMAT
         );
     }
 
@@ -362,6 +394,48 @@ class Log
             return; // Silently ignore if no handlers
         }
         self::getLogger()->info($message, $context);
+    }
+
+    private static function forceInfo($message, array $context = []): void
+    {
+        if (empty(self::$handlers)) {
+            return;
+        }
+        
+        $logger = self::getLogger();
+        $originalLevels = [];
+        
+        try {
+            foreach (self::$handlers as $i => $handler) {
+                $originalLevels[$i] = $handler->getLevel();
+                $handler->setLevel(Level::Debug);
+            }
+            
+            $logger->info($message, $context);
+        } finally {
+            // Always restore, even if exception thrown
+            foreach (self::$handlers as $i => $handler) {
+                if (isset($originalLevels[$i])) {
+                    $handler->setLevel($originalLevels[$i]);
+                }
+            }
+        }
+    }
+
+    public static function requestStart() {
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'CLI';
+        $path = $_SERVER['REQUEST_URI'] ?? '/';
+        $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        $timestamp = gmdate('Y-m-d H:i:s') . ' +0000';
+
+        Log::forceInfo(sprintf(
+            '%s Started %s "%s" for %s at %s',
+            self::getRequestId(),
+            strtoupper($method),
+            $path,
+            $clientIp,
+            $timestamp
+        ));
     }
 
     /**
