@@ -19,6 +19,28 @@ class Request {
     }
   }
 
+  /**
+   * @var string unique Request id in a specific time
+    */
+  private static $requestId = null;
+
+  public static function getRequestId(): string
+  {
+    return self::$requestId ?? self::generateRequestId();
+  }
+
+  /**
+   * Generate a short unique (in a specific time) request ID.
+   *
+   * @param int $length Number of hex characters (default 6)
+   * @return string
+   */
+  private static function generateRequestId(int $length = 6): string
+  {
+    self::$requestId = bin2hex(random_bytes($length / 2));
+    return self::$requestId;
+  }
+
   public static function set_param($key, $value) {
     self::$params[$key] = $value;
   }

@@ -46,7 +46,6 @@ class Web
         $routes = include App::basePath('/config/routes.php');
         $matcher = $routes->url_matcher();
 
-        $requestId = Log::getRequestId();
         $startTime = microtime(true);
 
         // Log request start
@@ -62,8 +61,7 @@ class Web
         }
 
         Log::info(sprintf(
-            '%s Processing by %s as HTML',
-            $requestId,
+            'Processing by %s as HTML',
             $controllerAction
         ));
 
@@ -76,8 +74,7 @@ class Web
         $reason = $status >= 200 && $status < 300 ? 'OK' : 'Error';
 
         Log::info(sprintf(
-            '%s Completed %d %s in %dms',
-            $requestId,
+            'Completed %d %s in %dms',
             $status,
             $reason,
             $durationMs
@@ -125,44 +122,17 @@ class Web
             return new Response('Not Found', 404);
 
         } catch(ErrorException $e) {
-            $msg = '';
+            
+            return Debug::exceptionResponse($e, 500);
 
-            if(Utils::env('DEBUG') == true) {
-              $msg .= "ErrorException: ".$e->getMessage();
-              $msg .= "\n<br>\n";
-              $msg .= Debug::details($e);
-            } else {
-              $msg = 'An error occurred';
-            }
-
-            // Debug::details($e);
-
-            return new Response($msg, 500);
         } catch (Exception $e) {
 
-          $msg = '';
-
-          if(Utils::env('DEBUG') == true) {
-            $msg .= "Exception: ".$e->getMessage();
-            $msg .= "\n<br>\n";
-            $msg .= Debug::details($e);
-          } else {
-            $msg = 'An error occurred';
-          }
-
-          return new Response($msg, 500);
+          return Debug::exceptionResponse($e, 500);
 
         } catch(Error $e) {
-          $msg = '';
+          
+          return Debug::exceptionResponse($e, 500);
 
-          if(Utils::env('DEBUG') == true) {
-            $msg .= "Error: ".$e->getMessage();
-            $msg .= "\n<br>\n";
-            $msg .= Debug::details($e);
-          } else {
-            $msg = 'An error occurred';
-          }
-          return new Response($msg, 500);
         } finally {
             restore_error_handler();
         }

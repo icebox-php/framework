@@ -57,16 +57,6 @@ class Log
     private static $handlers = [];
 
     /**
-     * @var string unique Request id in a specific time
-     */
-    private static $requestId = null;
-
-    /**
-     * @var string Default log line format
-     */
-    private const DEFAULT_LINE_FORMAT = '%datetime% %channel% - %level_name% - %message%';
-
-    /**
      * @var string Default log datetime format
      */
     private const DEFAULT_DATETIME_FORMAT = 'Y-m-d\TH:i:s.uP';
@@ -104,23 +94,6 @@ class Log
         }
         
         return $logger;
-    }
-
-    public static function getRequestId(): string
-    {
-        return self::$requestId ?? self::generateRequestId();
-    }
-
-    /**
-     * Generate a short unique (in a specific time) request ID.
-     *
-     * @param int $length Number of hex characters (default 6)
-     * @return string
-     */
-    private static function generateRequestId(int $length = 6): string
-    {
-        self::$requestId = bin2hex(random_bytes($length / 2));
-        return self::$requestId;
     }
 
     /**
@@ -174,7 +147,7 @@ class Log
         // Colorful output for CLI
         if (php_sapi_name() === 'cli' || php_sapi_name() === 'phpdbg') {
             $formatter = new LineFormatter(
-                self::DEFAULT_LINE_FORMAT . "\n",
+                self::lineFormat() . "\n",
                 self::DEFAULT_DATETIME_FORMAT,
                 true,
                 true
@@ -256,6 +229,13 @@ class Log
     }
 
     /**
+     * @var string Default log line format
+     */
+    private static function lineFormat() {
+        return '%datetime% %channel% - %level_name% - ' . Request::getRequestId() . ' %message%';
+    }
+
+    /**
      * Create a standard line formatter
      * 
      * @return LineFormatter
@@ -263,7 +243,7 @@ class Log
     private static function createLineFormatter(): LineFormatter
     {
         return new LineFormatter(
-            self::DEFAULT_LINE_FORMAT . "\n",
+            self::lineFormat() . "\n",
             self::DEFAULT_DATETIME_FORMAT
         );
     }
@@ -430,8 +410,7 @@ class Log
             $timestamp = gmdate('Y-m-d H:i:s') . ' +0000';
 
             Log::forceInfo(sprintf(
-                '%s Started %s "%s" for %s at %s',
-                self::getRequestId(),
+                'Started %s "%s" for %s at %s',
                 strtoupper($method),
                 $path,
                 $clientIp,

@@ -3,9 +3,35 @@
 namespace Icebox;
 
 class Debug {
-  public static function details($e) {
+  public static function exceptionResponse($e, $status_code): Response
+  {
+    if(Config::get('debug') == true) {
+      self::sendDetailsToLog($e);
+      $web_msg = self::detailsForWebpage($e);
+    } else {
+      // self::sendMinimalToLog($e); // TODO: urgent, add this function
+      $web_msg = self::minimalMessageForWebpage($e);
+    }
 
-    $html = "<br><br>\n";
+    return new Response($web_msg, 500);
+  }
+
+  private static function sendDetailsToLog($e) {
+    Log::error(get_class($e) . ": " . $e->getMessage());
+
+    foreach ($e->getTrace() as $value) {
+      if(array_key_exists('file', $value) && array_key_exists('line', $value)) {
+        $msg = $value['file'] . ':' . $value['line'] . ':' . 'in' . '`' . $value['function'] . '`';
+      } else {
+        $msg = $value['class'] . '::' . $value['function'];
+      }
+      Log::error($msg);
+    }
+  }
+
+  private static function detailsForWebpage($e) {
+    $html = get_class($e).": ".$e->getMessage();
+    $html .= "\n<br><br><br>\n\n";
 
     // var_dump($e->getTrace());
     foreach ($e->getTrace() as $value) {
@@ -34,6 +60,10 @@ class Debug {
       // $html = $html . $value . '<br>' . "\n";
     }
     return $html;
+  }
+
+  private static function minimalMessageForWebpage($e) {
+    return 'An error occurred';
   }
 
   private static function read_file($file, $line) {
