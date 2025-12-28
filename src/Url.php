@@ -76,7 +76,7 @@ class Url
      */
     public static function absolute(string $path): string
     {
-        $path = self::relative($path);
+        // $path = self::relative($path);
         $scheme = self::isSecure() ? 'https' : 'http';
         $host = Config::get('app_host'); //$_SERVER['HTTP_HOST'] ?? 'localhost';
         

@@ -13,7 +13,7 @@ use Error;
 // if (!defined('DEBUG')) { define('DEBUG', false); }
 
 class App {
-    public static $controller_namespace  = 'App\Controller\\';
+    public static $controller_namespace  = '\App\Controller\\';
 
     public static $controller;
     public static $action;

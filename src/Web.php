@@ -114,8 +114,8 @@ class Web
             } else {
                 throw new \Exception(
                   sprintf(
-                    "Can not call %sController::%s. Please check if this function exists, or the function is public",
-                    App::$controller, App::$action
+                    "Can not call \"%s::%s\". Please check if \"%s\" function exists, and \"%s\" is public static function",
+                    App::$controller, App::$action, App::$action, App::$action
                   )
                 );
             }
@@ -172,11 +172,17 @@ class Web
     private static function clip_action($matcher) {
         $parts = explode('::', $matcher);
 
-        App::$controller = $parts[0];
-        App::$action = $parts[1];
+        $isNamespaced = str_starts_with($parts[0], 'App\\Controller\\') 
+            || str_starts_with($parts[0], '\\App\\Controller\\') 
+            || str_starts_with($parts[0], '\\');
+        if (! $isNamespaced) {
+            $controller = App::$controller_namespace . $parts[0] . 'Controller';
+        }
 
-        $controller = App::$controller_namespace . $parts[0] . 'Controller';
         $action = $parts[1];
+
+        App::$controller = $controller;
+        App::$action = $action;
 
         return array(new $controller, $action);
     }
