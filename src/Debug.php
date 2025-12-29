@@ -9,7 +9,7 @@ class Debug {
       self::sendDetailsToLog($e);
       $web_msg = self::detailsForWebpage($e);
     } else {
-      // self::sendMinimalToLog($e); // TODO: urgent, add this function
+      self::sendMinimalToLog($e);
       $web_msg = self::minimalMessageForWebpage($e);
     }
 
@@ -60,6 +60,20 @@ class Debug {
       // $html = $html . $value . '<br>' . "\n";
     }
     return $html;
+  }
+
+  private static function sendMinimalToLog($e) {
+    Log::error(get_class($e) . ": " . $e->getMessage());
+
+    foreach ($e->getTrace() as $value) {
+      if(array_key_exists('file', $value) && array_key_exists('line', $value)) {
+        $msg = $value['file'] . ':' . $value['line'] . ':' . 'in' . '`' . $value['function'] . '`';
+      } else {
+        $msg = $value['class'] . '::' . $value['function'];
+      }
+      Log::error($msg);
+      break;
+    }
   }
 
   private static function minimalMessageForWebpage($e) {
