@@ -13,7 +13,7 @@ class Debug {
       $web_msg = self::minimalMessageForWebpage($e);
     }
 
-    return new Response($web_msg, 500);
+    return new Response($web_msg, $status_code);
   }
 
   private static function sendDetailsToLog($e) {
@@ -63,17 +63,17 @@ class Debug {
   }
 
   private static function sendMinimalToLog($e) {
-    Log::error(get_class($e) . ": " . $e->getMessage());
+      Log::error(get_class($e) . ": " . $e->getMessage());
 
-    foreach ($e->getTrace() as $value) {
-      if(array_key_exists('file', $value) && array_key_exists('line', $value)) {
-        $msg = $value['file'] . ':' . $value['line'] . ':' . 'in' . '`' . $value['function'] . '`';
-      } else {
-        $msg = $value['class'] . '::' . $value['function'];
+      $trace = $e->getTrace()[0] ?? null;
+      if($trace) {
+          if (isset($trace['file'], $trace['line'])) {
+              $msg = "{$trace['file']}:{$trace['line']}:in `" . ($trace['function'] ?? 'unknown') . '`';
+          } else {
+              $msg = ($trace['class'] ?? 'unknown') . '::' . ($trace['function'] ?? 'unknown');
+          }
+          Log::error($msg);
       }
-      Log::error($msg);
-      break;
-    }
   }
 
   private static function minimalMessageForWebpage($e) {

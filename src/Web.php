@@ -3,9 +3,6 @@
 namespace Icebox;
 
 use Icebox\Exception\ResourceNotFoundException;
-use ErrorException;
-use Exception;
-use Error;
 
 /**
  * Web request handler
@@ -84,7 +81,7 @@ class Web
         $response->send();
     }
 
-    public static function handle($matcher) {
+    public static function handle($matcher): Response {
 
         try {
 
@@ -95,46 +92,47 @@ class Web
             //==============================================
 
             $matcher_parts = self::clip_action($matcher);
+            [$controllerInstance, $action] = $matcher_parts;
 
-            if(method_exists($matcher_parts[0], $matcher_parts[1]) && is_callable($matcher_parts)) {
-
-                // TODO: Call before action
-                // if returned value from any before_action is a "Response Object" and has response code 301 or 302
-                // return this response object
-
-                $response = call_user_func($matcher_parts);
-                if($response === null) { throw new \Exception('"May be, you forgot to \'return $this->render()\' from controller::action"'); }
-
-                // TODO: Call after action
-
-                return $response;
-            } else {
+            // Check if method exists and is public
+            if (!method_exists($controllerInstance, $action)) {
                 throw new \Exception(
-                  sprintf(
-                    "Can not call \"%s::%s\". Please check if \"%s\" function exists, and \"%s\" is public static function",
-                    App::$controller, App::$action, App::$action, App::$action
-                  )
+                    sprintf(
+                        'Method %s::%s does not exist',
+                        get_class($controllerInstance),
+                        $action
+                    )
                 );
             }
 
+            $reflection = new \ReflectionMethod($controllerInstance, $action);
+            if (!$reflection->isPublic()) {
+                throw new \Exception(
+                    sprintf(
+                        'Method %s::%s must be public',
+                        get_class($controllerInstance),
+                        $action
+                    )
+                );
+            }
+
+            // TODO: Call before action
+            // if returned value from any before_action is a "Response Object" and has response code 301 or 302
+            // return this response object
+
+            $response = $controllerInstance->$action();
+            if ($response === null) {
+                throw new \Exception('Controller action must return a Response object');
+            }
+
+            // TODO: Call after action
+
+            return $response;
+
         } catch (ResourceNotFoundException $e) {
-
             return new Response('Not Found', 404);
-
-        } catch(ErrorException $e) {
-            
+        } catch (\Throwable $e) {
             return Debug::exceptionResponse($e, 500);
-
-        } catch (Exception $e) {
-
-          return Debug::exceptionResponse($e, 500);
-
-        } catch(Error $e) {
-          
-          return Debug::exceptionResponse($e, 500);
-
-        } finally {
-            restore_error_handler();
         }
 
     }
@@ -142,11 +140,10 @@ class Web
     private static function clip_action($matcher) {
         $parts = explode('::', $matcher);
 
-        $isNamespaced = str_starts_with($parts[0], 'App\\Controller\\') 
-            || str_starts_with($parts[0], '\\App\\Controller\\') 
-            || str_starts_with($parts[0], '\\');
-        if (! $isNamespaced) {
-            $controller = App::$controller_namespace . $parts[0] . 'Controller';
+        if (str_ends_with($parts[0], 'Controller')) {
+            $controller = $parts[0];
+        } else {
+            $controller = "\App\Controller\\{$parts[0]}Controller";
         }
 
         $action = $parts[1];
