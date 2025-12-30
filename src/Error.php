@@ -2,9 +2,11 @@
 
 namespace Icebox;
 
-class Debug {
-  public static function exceptionResponse($e, $status_code): Response
+class Error {
+  public static function exceptionResponse($e): Response
   {
+    $statusCode = $e->getCode() ?: 500;
+    
     if(Config::get('debug') == true) {
       self::sendDetailsToLog($e);
       $web_msg = self::detailsForWebpage($e);
@@ -13,7 +15,7 @@ class Debug {
       $web_msg = self::minimalMessageForWebpage($e);
     }
 
-    return new Response($web_msg, $status_code);
+    return new Response($web_msg, $statusCode);
   }
 
   private static function sendDetailsToLog($e) {
