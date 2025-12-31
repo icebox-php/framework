@@ -2,7 +2,15 @@
 
 #-------------------------
 # Load Composer autoloader
-require_once __DIR__ . '/vendor/autoload.php';
+if(!class_exists(\Composer\Autoload\ClassLoader::class, false)) {
+    $autoload = __DIR__ . '/vendor/autoload.php';
+    if (file_exists($autoload)) {
+        require_once $autoload;
+    } else {
+        echo "Composer autoload not found. Run \"composer install\".\n";
+        exit(1);
+    }
+}
 
 #-------------------------------
 # Set APP_ENV if not already set
