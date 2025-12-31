@@ -23,7 +23,7 @@ class Error {
 
     foreach ($e->getTrace() as $value) {
       if(array_key_exists('file', $value) && array_key_exists('line', $value)) {
-        $msg = $value['file'] . ':' . $value['line'] . ':' . 'in' . '`' . $value['function'] . '`';
+        $msg = self::formatFilePath($value['file']) . ':' . $value['line'] . ':' . 'in' . '`' . $value['function'] . '`';
       } else {
         $msg = $value['class'] . '::' . $value['function'];
       }
@@ -40,7 +40,7 @@ class Error {
 
       if(array_key_exists('file', $value)) {
         $html .= "\n<hr>\n";
-        $html .= 'File: ' . $value['file'];
+        $html .= 'File: ' . self::formatFilePath($value['file']);
         if(array_key_exists('line', $value)) {
           $html .= "<br>\n";
           $html .= 'Line: ' . $value['line'];
@@ -70,7 +70,7 @@ class Error {
       $trace = $e->getTrace()[0] ?? null;
       if($trace) {
           if (isset($trace['file'], $trace['line'])) {
-              $msg = "{$trace['file']}:{$trace['line']}:in `" . ($trace['function'] ?? 'unknown') . '`';
+              $msg = self::formatFilePath($trace['file']) . ":{$trace['line']}:in `" . ($trace['function'] ?? 'unknown') . '`';
           } else {
               $msg = ($trace['class'] ?? 'unknown') . '::' . ($trace['function'] ?? 'unknown');
           }
@@ -142,4 +142,14 @@ class Error {
       return $html;
     }
     */
+
+    private static function formatFilePath($file_path) {
+      $basePath = App::basePath();
+      if(str_starts_with($file_path, App::basePath())) { // this file is in web application folder
+        $file_path = substr($file_path, strlen(App::basePath()));
+        return ltrim($file_path, '/');
+      }
+
+      return $file_path; // this file is outside of web application
+    }
 }

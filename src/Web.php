@@ -12,8 +12,8 @@ use Icebox\Exception\ResourceNotFoundException;
  */
 class Web
 {
-    private $app;
-    private $routes;
+    // private $app;
+    // private $routes;
 
     /**
      * @param App $app
